@@ -1,0 +1,7 @@
+﻿*
+!*.c
+!*.cpp
+!*.pas
+!*.pdf
+!*/
+!.gitignore
