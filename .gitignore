@@ -5,3 +5,4 @@
 !*.pdf
 !*/
 !.gitignore
+!README.md
