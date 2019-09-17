@@ -23,7 +23,7 @@ void tarjan(int u){
 		if (!dfn[v = to[i]]) tarjan(v), low[u] = std :: min(low[u], low[v]);
 		else if (vis[v]) low[u] = std :: min(low[u], dfn[v]);
 	if (dfn[u] == low[u]){
-		++cnt;
+		++cnt, sta[top + 1] = -1;
 		while (sta[top + 1] != u) col[sta[top]] = cnt, vis[sta[top--]] = 0;
 	}
 }
