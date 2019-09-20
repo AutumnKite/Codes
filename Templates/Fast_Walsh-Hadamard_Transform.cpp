@@ -31,11 +31,6 @@ namespace Fast_Walsh_Transform{
 	void dec(int &a, int b){ (a -= b) < 0 ? a += P : 0; }
 	int plus(int a, int b){ return (a += b) >= P ? a - P : a; }
 	int minus(int a, int b){ return (a -= b) < 0 ? a + P : a; }
-	int get(int n){
-		int res = 1;
-		while (res < n) res <<= 1;
-		return res;
-	}
 	void FWT_or(poly &a, int op = 1){
 		int n = a.size();
 		for (register int m = 1; m < n; m <<= 1)
@@ -45,8 +40,7 @@ namespace Fast_Walsh_Transform{
 					else dec(a[i + m], a[i]);
 	}
 	poly mul_or(poly a, poly b){
-		int m = std :: max(a.size(), b.size()), n = get(m);
-		a.resize(n), b.resize(n);
+		int n = a.size();
 		FWT_or(a), FWT_or(b);
 		for (register int i = 0; i < n; ++i) a[i] = 1ll * a[i] * b[i] % P;
 		FWT_or(a, -1);
@@ -61,8 +55,7 @@ namespace Fast_Walsh_Transform{
 					else dec(a[i], a[i + m]);
 	}
 	poly mul_and(poly a, poly b){
-		int m = std :: max(a.size(), b.size()), n = get(m);
-		a.resize(n), b.resize(n);
+		int n = a.size();
 		FWT_and(a), FWT_and(b);
 		for (register int i = 0; i < n; ++i) a[i] = 1ll * a[i] * b[i] % P;
 		FWT_and(a, -1);
@@ -79,8 +72,7 @@ namespace Fast_Walsh_Transform{
 				}
 	}
 	poly mul_xor(poly a, poly b){
-		int m = std :: max(a.size(), b.size()), n = get(m);
-		a.resize(n), b.resize(n);
+		int n = a.size();
 		FWT_xor(a), FWT_xor(b);
 		for (register int i = 0; i < n; ++i) a[i] = 1ll * a[i] * b[i] % P;
 		FWT_xor(a, -1);
