@@ -16,17 +16,41 @@ struct node{
 	int x, y, w;
 }p[N];
 std :: vector< std :: pair<int, int> > a[N], b[N];
-struct Binary_Indexed_Tree{
-	long long c[N];
-	void add(int x, int y){
-		for (; x <= m; x += x & -x) c[x] += y;
+struct Segment_Tree{
+	std :: pair<long long, int> mx[N << 2];
+	long long lz[N << 2];
+	void up(int u){
+		mx[u] = std :: max(mx[u << 1], mx[u << 1 | 1]);
 	}
-	long long query(int x){
-		long long s = 0;
-		for (; x; x -= x & -x) s += c[x];
-		return s;
+	void add(int u, long long x){
+		mx[u].first += x, lz[u] += x;
 	}
-};
+	void down(int u){
+		if (lz[u]) add(u << 1, lz[u]), add(u << 1 | 1, lz[u]), lz[u] = 0;
+	}
+	void build(int u, int l, int r){
+		if (l == r) return mx[u] = std :: make_pair(0, l), void(0);
+		int md = (l + r) >> 1;
+		build(u << 1, l, md), build(u << 1 | 1, md + 1, r);
+		up(u);
+	}
+	void modify(int u, int l, int r, int L, int R, long long x){
+		if (L <= l && r <= R) return add(u, x), void(0);
+		int md = (l + r) >> 1;
+		down(u);
+		if (L <= md) modify(u << 1, l, md, L, R, x);
+		if (R > md) modify(u << 1 | 1, md + 1, r, L, R, x);
+		up(u);
+	}
+	std :: pair<long long, int> query(int u, int l, int r, int L, int R){
+		if (L <= l && r <= R) return mx[u];
+		int md = (l + r) >> 1;
+		down(u);
+		if (R <= md) return query(u << 1, l, md, L, R);
+		else if (L > md) return query(u << 1 | 1, md + 1, r, L, R);
+		else return std :: max(query(u << 1, l, md, L, R), query(u << 1 | 1, md + 1, r, L, R));
+	}
+}T;
 int main(){
 	n = read();
 	for (register int i = 1; i <= n; ++i)
@@ -39,5 +63,16 @@ int main(){
 		a[p[i].x].push_back(std :: make_pair(p[i].y, p[i].w));
 		b[p[i].y].push_back(std :: make_pair(p[i].x, p[i].w));
 	}
-	
+	long long sum = 0, ans = 0;
+	int ansl = 2e9, ansr = 2e9;
+	T.build(1, 0, m), T.modify(1, 0, m, 0, 0, pos[1]);
+	for (register int i = 1; i <= m; ++i){
+		for (auto v : a[i]) T.modify(1, 0, m, v.first, m, -v.second), sum += v.first <= i ? v.second : 0;
+		for (auto v : b[i]) T.modify(1, 0, m, v.first, m, -v.second), sum += v.first < i ? v.second : 0;
+		std :: pair<long long, int> res = T.query(1, 0, m, 0, i - 1);
+		res.first += sum - pos[i];
+		if (res.first > ans) ans = res.first, ansl = pos[res.second + 1], ansr = pos[i];
+		T.modify(1, 0, m, i, i, sum + pos[i + 1]);
+	}
+	printf("%lld\n%d %d %d %d\n", ans, ansl, ansl, ansr, ansr);
 }
