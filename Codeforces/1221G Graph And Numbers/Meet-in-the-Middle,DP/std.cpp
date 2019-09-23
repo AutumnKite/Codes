@@ -15,7 +15,7 @@ long long ans;
 bool A[1 << 20], B[1 << 20];
 int S[1 << 20], dp[1 << 20];
 long long no0(){
-	int n0 = n, n1 = n - n0, U = (1 << n1) - 1;
+	int n0 = n >> 1, n1 = n - n0, U = (1 << n1) - 1;
 	for (register int i = 0; i < n0; ++i)
 		for (register int j = i + 1; j < n0; ++j)
 			if (e[i][j]) A[(1 << i) | (1 << j)] = 1;
@@ -41,11 +41,10 @@ long long no0(){
 	for (register int i = 0; i < n0; ++i)
 		for (register int j = 0; j < (1 << n0); ++j)
 			if (j >> i & 1) S[j] |= S[j ^ (1 << i)];
-	// for (register int i = 0; i < (1 << n0); ++i) printf("%d ", S[i]); putchar('\n');
 	// S[i] 表示 A 中 i 这个集合填 0 时，B 中需要填 1 的集合
 	long long res = 0;
 	for (register int i = 0; i < (1 << n0); ++i)
-		if (A[i]) res += dp[U ^ S[i]];
+		if (!A[i]) res += dp[U ^ S[i]];
 	// B 中 S[i] 这个集合必须填 1，其他点填的数与这个集合无关（不可能形成 0 边），所以只需要使得 U ^ S[i] 满足条件
 	return res;
 }
