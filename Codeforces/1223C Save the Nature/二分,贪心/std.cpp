@@ -26,7 +26,7 @@ void solve(){
 	n = read();
 	for (register int i = 1; i <= n; ++i) a[i] = read() / 100;
 	p1 = read(), q1 = read(), p2 = read(), q2 = read(), k = read();
-	if (q1 > q2) std :: swap(p1, p2), std :: swap(q1, q2);
+	if (p1 > p2) std :: swap(p1, p2), std :: swap(q1, q2);
 	p3 = p1 + p2, q3 = q1 * q2 / std :: __gcd(q1, q2);
 	std :: sort(a + 1, a + 1 + n), std :: reverse(a + 1, a + 1 + n);
 	int l = 1, r = n, md, ans = -1;
