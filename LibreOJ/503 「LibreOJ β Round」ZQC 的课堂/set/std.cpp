@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cctype>
+#include <cstdlib>
 #include <cstring>
 #include <algorithm>
 char buf[1 << 23], *ps = buf, *pt = buf, pbuf[1 << 23], *pp = pbuf;
@@ -21,30 +22,30 @@ void print(int x, char ch = '\n'){
 	putchar(ch);
 }
 const int N = 100005;
-unsigned int rnd(){
+int n, q, x[N], y[N];
+int rnd(){
 	static unsigned int seed = 19260817;
 	return seed ^= seed << 19, seed ^= seed >> 7, seed ^= seed << 1;
 }
 struct treap{
-	unsigned int key[N];
-	int top, rub[N], rt, cnt, val[N], sz[N], ls[N], rs[N];
+	int top, rub[N], rt, cnt, val[N], key[N], sz[N], ls[N], rs[N];
 	treap(){ cnt = top = 0; }
 	int new_node(int v){
 		int u = top ? rub[top--] : ++cnt;
-		return val[u] = v, key[u] = rnd(), sz[u] = 1, ls[u] = rs[u] = 0, u;
+		return val[u] = v, key[u] = rnd(), sz[u] = 1, u;
 	}
-	void up(int u){ sz[u] = sz[ls[u]] + sz[rs[u]] + 1; }
-	std :: pair<int, int> split_v(int u, int v){ // one is < v and another is >= v
+	void up(int u){ sz[u] = sz[ls[u]] + sz[rs[u]]; }
+	std :: pair<int, int> split_v(int u, int v){ // one is <= v and another is > v
 		if (!u) return {0, 0};
 		std :: pair<int, int> tmp;
-		if (val[u] >= v) return tmp = split_v(ls[u], v), ls[u] = tmp.second, up(tmp.second = u), tmp;
+		if (val[u] > v) return tmp = split_v(ls[u], v), ls[u] = tmp.second, up(tmp.second = u), tmp;
 		else return tmp = split_v(rs[u], v), rs[u] = tmp.first, up(tmp.first = u), tmp;
 	}
 	std :: pair<int, int> split_sz(int u, int k){
 		if (!u) return {0, 0};
 		std :: pair<int, int> tmp;
-		if (sz[ls[u]] >= k) return tmp = split_sz(ls[u], k), ls[u] = tmp.second, up(tmp.second = u), tmp;
-		return tmp = split_sz(rs[u], k - sz[ls[u]] - 1), rs[u] = tmp.first, up(tmp.first = u), tmp;
+		if (sz[ls[u]] >= k) return tmp = split_v(ls[u], k), ls[u] = tmp.second, up(tmp.second = u), tmp;
+		return tmp = split_v(rs[u], k - sz[ls[u]] - 1), rs[u] = tmp.first, up(tmp.first = u), tmp;
 	}
 	int merge(int u, int v){
 		if (!u || !v) return u | v;
@@ -53,45 +54,18 @@ struct treap{
 	}
 	void insert(int v){
 		std :: pair<int, int> tmp = split_v(rt, v + 1);
-		rt = merge(merge(tmp.first, new_node(v)), tmp.second);
+		rt = merge(tmp.first, merge(new_node(v), tmp.second));
 	}
 	void erase(int v){
 		std :: pair<int, int> tmp = split_v(rt, v), ttmp = split_sz(tmp.second, 1);
 		rt = merge(tmp.first, ttmp.second), rub[++top] = ttmp.first;
 	}
-	int rnk(int v){
+	int rank(int v){
 		int u = rt, res = 0;
 		while (u) if (val[u] >= v) u = ls[u]; else res += sz[ls[u]] + 1, u = rs[u];
 		return res;
 	}
-	int kth(int k){
-		int u = rt;
-		while (u)
-			if (k <= sz[ls[u]]) u = ls[u];
-			else if (k == sz[ls[u]] + 1) return val[u];
-			else k -= sz[ls[u]] + 1, u = rs[u];
-		return -1;
-	}
-	int pre(int v){
-		int u = rt, res = -1;
-		while (u) if (val[u] >= v) u = ls[u]; else res = val[u], u = rs[u];
-		return res;
-	}
-	int nxt(int v){
-		int u = rt, res = -1;
-		while (u) if (val[u] <= v) u = rs[u]; else res = val[u], u = ls[u];
-		return res;
-	}
-}T;
+};
 int main(){
-	int n = read();
-	while (n--){
-		int opt = read(), x = read();
-		if (opt == 1) T.insert(x);
-		if (opt == 2) T.erase(x);
-		if (opt == 3) print(T.rnk(x) + 1);
-		if (opt == 4) print(T.kth(x));
-		if (opt == 5) print(T.pre(x));
-		if (opt == 6) print(T.nxt(x));
-	}
+	srand(19260817);
 }
