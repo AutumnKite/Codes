@@ -27,15 +27,21 @@ void dec(int &a, int b){ (a -= b) < 0 ? a += m : 0; }
 int plus(int a, int b){ return (a += b) >= m ? a - m : a; }
 int minus(int a, int b){ return (a -= b) < 0 ? a + m : a; }
 int gcd(int a, int b){ return b ? gcd(b, a % b) : a; }
+int exgcd(int a, int b, int &x, int &y){
+	if (!b) return x = 1, y = 0, a;
+	int g = exgcd(b, a % b, y, x);
+	return y -= a / b * x, g;
+}
 int find(int &x){
 	if (fa[x] == x) return 0;
-	else return plus(fw[x], find(fa[x]));
+	int res = plus(fw[x], find(fa[x]));
+	return fw[x] = res, x = fa[x], res;
 }
 void merge(int x, int y, int w){
 	int d = plus(find(x), find(y));
 	if (x == y) return g[x] = gcd(g[x], gcd(plus(w, w), plus(d, w))), void(0);
 	if (dep[x] < dep[y]) std :: swap(x, y);
-	fa[y] = x, fw[y] = w, dep[x] += dep[x] == dep[y], g[x] = gcd(gcd(g[x], g[y]), plus(w, w));
+	fa[y] = x, fw[y] = plus(d, w), dep[x] += dep[x] == dep[y], g[x] = gcd(gcd(g[x], g[y]), plus(w, w));
 }
 int main(){
 	n = read(), m = read(), q = read();
@@ -43,8 +49,12 @@ int main(){
 	while (q--){
 		int op = read(), u = read(), v = read();
 		if (op == 1){ merge(u, v, read() % m); continue; }
-		int d = plus(find(u), find(v)), a = read(), b = read(), c = read();
+		int d = plus(find(u), find(v)), a = read(), b = read(), c = read(), G, x, y;
 		if (u != v){ print(0); continue; }
-		dec(a, d);
+		dec(a, d), G = exgcd(b, g[u], x, y);
+		if (a % G){ print(0); continue; }
+		a = -a / G, G = g[u] / G, x = (1ll * x * a % G + G) % G;
+		if (x >= c) print(0);
+		else print((c - 1 - x) / G + 1);
 	}
 }
