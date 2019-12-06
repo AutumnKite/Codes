@@ -4,10 +4,10 @@
 #include <cstring>
 #include <algorithm>
 #include <vector>
-// char buf[1 << 23], *ps = buf, *pt = buf, pbuf[1 << 23], *pp = pbuf;
-// #define getchar() (ps == pt && (pt = (ps = buf) + fread(buf, 1, 1 << 23, stdin), ps == pt) ? EOF : *ps++)
-// #define putchar(x) (pp == pbuf + (1 << 23) ? fwrite(pbuf, 1, 1 << 23, stdout), pp = pbuf : 0, *pp++ = x)
-// struct __IO_flusher{ ~__IO_flusher(){ fwrite(pbuf, 1, pp - pbuf, stdout); } } IO_flusher;
+char buf[1 << 23], *ps = buf, *pt = buf, pbuf[1 << 23], *pp = pbuf;
+#define getchar() (ps == pt && (pt = (ps = buf) + fread(buf, 1, 1 << 23, stdin), ps == pt) ? EOF : *ps++)
+#define putchar(x) (pp == pbuf + (1 << 23) ? fwrite(pbuf, 1, 1 << 23, stdout), pp = pbuf : 0, *pp++ = x)
+struct __IO_flusher{ ~__IO_flusher(){ fwrite(pbuf, 1, pp - pbuf, stdout); } } IO_flusher;
 int read(){
 	register int x = 0;
 	register char f = 1, ch = getchar();
@@ -136,6 +136,7 @@ void get_g(int *a, int n, poly &g){
 	g.push_back(0);
 	for (register int i = t - 1; i; --i) g[i] = minus(0, g[i - 1]);
 	g[0] = n;
+	for (register int i = 0; i < t; ++i) g[i] = 1ll * g[i] * inv[i] % P;
 }
 void init(int n){
 	fac[0] = 1;
@@ -148,11 +149,10 @@ int main(){
 	for (register int i = 0; i < n; ++i) a[i] = read();
 	for (register int i = 0; i < m; ++i) b[i] = read();
 	t = read() + 1;
+	init(t);
 	poly ga, gb;
 	get_g(a, n, ga), get_g(b, m, gb);
-	init(t);
-	for (register int i = 0; i < t; ++i) ga[i] = 1ll * ga[i] * inv[i] % P;
-	for (register int i = 0; i < t; ++i) gb[i] = 1ll * gb[i] * inv[i] % P;
 	poly res = Multiply(ga, gb);
-	for (register int i = 1; i < t; ++i) print(1ll * res[i] * fac[i] % P);
+	for (register int i = 1, w = qpow(1ll * n * m % P, P - 2); i < t; ++i)
+		print(1ll * res[i] * fac[i] % P * w % P);
 }
