@@ -33,7 +33,7 @@ void print_str(char *s, char ch = '\n'){
 	putchar(ch);
 }
 const int N = 1000005, INF = 0x3f3f3f3f;
-int n, q, col[N], cnt_white;
+int n, q, col[N], cnt_white, mn[N], ans[N];
 int edge, to[N << 1], tw[N << 1], pr[N << 1], hd[N];
 void addedge(int u, int v, int w){
 	to[++edge] = v, tw[edge] = w, pr[edge] = hd[u], hd[u] = edge;
@@ -101,27 +101,33 @@ void solve(int Sz, int u, int lst){
 		if (!vis[v = to[i]]) solve(sz[v], v, u);
 }
 void to_white(int u){
-	hans.erase(hs[u].top2());
+	register int s;
 	hs[u].push(0);
-	hans.push(hs[u].top2());
+	s = hs[u].top2();
+	if (s != ans[u]) hans.erase(ans[u]), hans.push(ans[u] = s);
 	for (register int v = u; fa[v]; v = fa[v]){
-		hans.erase(hs[fa[v]].top2());
-		hs[fa[v]].erase(hf[v].top());
 		hf[v].push(dist(u, fa[v]));
-		hs[fa[v]].push(hf[v].top());
-		hans.push(hs[fa[v]].top2());
+		s = hf[v].top();
+		if (s != mn[v]){
+			hs[fa[v]].erase(mn[v]), hs[fa[v]].push(mn[v] = s);
+			s = hs[fa[v]].top2();
+			if (s != ans[fa[v]]) hans.erase(ans[fa[v]]), hans.push(ans[fa[v]] = s);
+		}
 	}
 }
 void to_black(int u){
-	hans.erase(hs[u].top2());
+	register int s;
 	hs[u].erase(0);
-	hans.push(hs[u].top2());
+	s = hs[u].top2();
+	if (s != ans[u]) hans.erase(ans[u]), hans.push(ans[u] = s);
 	for (register int v = u; fa[v]; v = fa[v]){
-		hans.erase(hs[fa[v]].top2());
-		hs[fa[v]].erase(hf[v].top());
 		hf[v].erase(dist(u, fa[v]));
-		hs[fa[v]].push(hf[v].top());
-		hans.push(hs[fa[v]].top2());
+		s = hf[v].top();
+		if (s != mn[v]){
+			hs[fa[v]].erase(mn[v]), hs[fa[v]].push(mn[v] = s);
+			s = hs[fa[v]].top2();
+			if (s != ans[fa[v]]) hans.erase(ans[fa[v]]), hans.push(ans[fa[v]] = s);
+		}
 	}
 }
 int main(){
@@ -134,9 +140,9 @@ int main(){
 		for (register int u = i; fa[u]; u = fa[u])
 			hf[u].push(dist(i, fa[u]));
 	for (register int i = 1; i <= n; ++i)
-		if (fa[i]) hs[fa[i]].push(hf[i].top());
+		if (fa[i]) hs[fa[i]].push(mn[i] = hf[i].top());
 	for (register int i = 1; i <= n; ++i) col[i] = 0, ++cnt_white, hs[i].push(0);
-	for (register int i = 1; i <= n; ++i) hans.push(hs[i].top2());
+	for (register int i = 1; i <= n; ++i) hans.push(ans[i] = hs[i].top2());
 	q = read();
 	while (q--){
 		char opt = readc();
