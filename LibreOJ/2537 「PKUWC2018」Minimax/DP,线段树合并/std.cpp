@@ -2,8 +2,8 @@
 #include <cctype>
 #include <cstring>
 #include <algorithm>
-// char buf[1 << 23], *ps = buf, *pt = buf;
-// #define getchar() (ps == pt && (pt = (ps = buf) + fread(buf, 1, 1 << 23, stdin), ps == pt) ? EOF : *ps++)
+char buf[1 << 23], *ps = buf, *pt = buf;
+#define getchar() (ps == pt && (pt = (ps = buf) + fread(buf, 1, 1 << 23, stdin), ps == pt) ? EOF : *ps++)
 int read(){
 	register int x = 0;
 	register char f = 1, ch = getchar();
@@ -46,6 +46,7 @@ struct Segment_Tree{
 	int get_ans(int u, int l, int r, int c){
 		if (l == r) return ans = (ans + 1ll * c * l % P * val[u] % P * val[u]) % P, 1;
 		int md = (l + r) >> 1, t = 0;
+		down(u);
 		if (ls[u]) t += get_ans(ls[u], l, md, c);
 		if (rs[u]) t += get_ans(rs[u], md + 1, r, c + t);
 		return t;
@@ -54,7 +55,7 @@ struct Segment_Tree{
 void dfs(int u){
 	if (!ls[u]) return T.insert(rt[u], 1, m, p[u], 1), void(0);
 	if (!rs[u]) return dfs(ls[u]), rt[u] = rt[ls[u]], void(0);
-	dfs(ls[u]), dfs(rs[u]), rt[u] = T.merge(ls[u], rs[u], 0, 0, p[u]);
+	dfs(ls[u]), dfs(rs[u]), rt[u] = T.merge(rt[ls[u]], rt[rs[u]], 0, 0, p[u]);
 }
 int main(){
 	n = read();
