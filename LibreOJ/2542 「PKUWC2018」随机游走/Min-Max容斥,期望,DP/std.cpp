@@ -19,15 +19,13 @@ int qpow(int a, int b){
 	for (; b; b >>= 1, a = 1ll * a * a % P) if (b & 1) s = 1ll * s * a % P;
 	return s;
 }
-void dfs(int S, int u, int fa = 0){
+void dfs(int S, int u, int fa = -1){
+	if (S >> u & 1) return A[u] = B[u] = 0, void(0);
 	int sa = 0, sb = 0, d = cnt[E[u]];
 	for (register int i = E[u], v; i; i &= i - 1)
 		if ((v = Log[i & -i]) != fa)
 			dfs(S, v, u), inc(sa, A[v]), inc(sb, B[v]);
-	d = qpow(d, P - 2);
-	sa = minus(1, 1ll * sa * d % P), sb = plus(1, 1ll * sb * d % P);
-	sa = qpow(sa, P - 2);
-	A[u] = 1ll * d * sa % P, B[u] = 1ll * sb * sa % P;
+	A[u] = qpow(minus(d, sa), P - 2), B[u] = 1ll * A[u] * (sb + d) % P;
 }
 int main(){
 	n = read(), q = read(), rt = read() - 1;
@@ -37,10 +35,8 @@ int main(){
 	for (register int i = 2; i <= (1 << n); ++i) Log[i] = Log[i >> 1] + 1;
 	cnt[0] = 0;
 	for (register int S = 1; S < (1 << n); ++S) cnt[S] = cnt[S >> 1] + (S & 1);
-	for (register int S = 1; S < (1 << n); ++S){
+	for (register int S = 1; S < (1 << n); ++S)
 		dfs(S, rt), f[S] = cnt[S] & 1 ? B[rt] : P - B[rt];
-		printf("%d\n", B[rt]);
-	}
 	for (register int i = 0; i < n; ++i)
 		for (register int S = 0; S < (1 << n); ++S)
 			if (S >> i & 1) inc(f[S], f[S ^ (1 << i)]);
