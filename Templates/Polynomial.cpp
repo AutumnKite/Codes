@@ -23,25 +23,37 @@ void print(int x, char ch = '\n'){
 	putchar(ch);
 }
 namespace Random_Number{
-	unsigned int seed = 19260817;
-	void srnd(unsigned int x){ seed = x; }
-	unsigned int rnd(){
+	unsigned seed = 19260817;
+	void srnd(unsigned x){ seed = x; }
+	unsigned rnd(){
 		return seed ^= seed << 19, seed ^= seed >> 7, seed ^= seed << 1;
 	}
 }
 using namespace Random_Number;
 namespace Polynomial{
-	typedef std :: vector<int> poly;
-	const int P = 998244353, G = 3, I2 = 499122177;
-	poly rev, omega;
-	void inc(int &a, int b){ (a += b) >= P ? a -= P : 0; }
-	void dec(int &a, int b){ (a -= b) < 0 ? a += P : 0; }
-	int plus(int a, int b){ return (a += b) >= P ? a - P : a; }
-	int minus(int a, int b){ return (a -= b) < 0 ? a + P : a; }
-	int qpow(int a, int b){
-		int s = 1;
-		for (; b; b >>= 1, a = 1ll * a * a % P) if (b & 1) s = 1ll * s * a % P;
+#define MAX_LEN 262144
+	typedef std :: vector<unsigned> poly;
+	const unsigned P = 998244353, G = 3;
+	poly rev;
+	unsigned omega[MAX_LEN], inv[MAX_LEN];
+	void inc(unsigned &a, const unsigned &b){ (a += b) >= P ? a -= P : 0; }
+	void dec(unsigned &a, const unsigned &b){ a < b ? a += P - b : a -= b; }
+	unsigned plus(const unsigned &a, const unsigned &b){ return a + b >= P ? a + b - P : a + b; }
+	unsigned minus(const unsigned &a, const unsigned &b){ return a < b ? a + P - b : a - b; }
+	unsigned mul(const unsigned &a, const unsigned &b){ return static_cast<unsigned long long>(a) * b % P; }
+	unsigned qpow(unsigned a, unsigned b){
+		unsigned s = 1;
+		for (; b; b >>= 1, a = mul(a, a)) if (b & 1) s = mul(s, a);
 		return s;
+	}
+	void Init(){
+		for (register int m = 1; m < MAX_LEN; m <<= 1){
+			unsigned _o = qpow(G, (P - 1) / (m << 1));
+			omega[m] = 1;
+			for (register int i = 1; i < m; ++i) omega[m + i] = mul(omega[m + i - 1], _o);
+		}
+		inv[1] = 1;
+		for (register int i = 2; i < MAX_LEN; ++i) inv[i] = mul(P - P / i, inv[P % i]);
 	}
 	int get(int n){
 		int res = 1;
@@ -53,63 +65,69 @@ namespace Polynomial{
 		while ((1 << k) < n) ++k;
 		rev.resize(n), rev[0] = 0, --k;
 		for (register int i = 1; i < n; ++i) rev[i] = (rev[i >> 1] >> 1) | ((i & 1) << k);
-		omega.resize(n);
-		for (register int m = 1; m < n; m <<= 1){
-			int _o = qpow(G, (P - 1) / (m << 1));
-			omega[m] = 1;
-			for (register int i = 1; i < m; ++i) omega[m + i] = 1ll * omega[m + i - 1] * _o % P;
-		}
 	}
 	void DFT(poly &f, int n){
 		f.resize(n);
-		for (register int i = 0; i < n; ++i) if (i < rev[i]) std :: swap(f[i], f[rev[i]]);
+		static unsigned long long ft[MAX_LEN];
+		for (register int i = 0; i < n; ++i) ft[rev[i]] = f[i];
 		for (register int m = 1; m < n; m <<= 1){
+#if MAX_LEN > 262144
+			if (m & 262144){
+				for (register int i = 0; i < n; ++i) ft[i] %= P;
+			}
+#endif
 			register int l = m << 1;
-			for (poly :: iterator W = omega.begin() + m, F = f.begin(); F != f.end(); F += l)
-				for (register int i = 0; i < m; ++i){
-					register int t = 1ll * F[m + i] * W[i] % P;
-					F[m + i] = minus(F[i], t), inc(F[i], t);
+			for (register int p = 0; p < n; p += l){
+				register unsigned *W = omega + m;
+				register unsigned long long *F0 = ft + p, *F1 = ft + p + m;
+				for (register int i = 0; i < m; ++i, ++W, ++F0, ++F1){
+					register unsigned t = (*F1) * (*W) % P;
+					*F1 = (*F0) + P - t, *F0 += t;
 				}
+			}
 		}
+		for (register int i = 0; i < n; ++i) f[i] = ft[i] % P;
 	}
 	void IDFT(poly &f, int n){
 		DFT(f, n), std :: reverse(f.begin() + 1, f.end());
-		register int t = qpow(n, P - 2);
-		for (register int i = 0; i < n; ++i) f[i] = 1ll * f[i] * t % P;
+		unsigned t = qpow(n, P - 2);
+		for (register int i = 0; i < n; ++i) f[i] = mul(f[i], t);
 	}
 	poly Plus(poly a, poly b){
 		int n = std :: max(a.size(), b.size());
 		a.resize(n), b.resize(n);
-		poly res(n);
-		for (register int i = 0; i < n; ++i) res[i] = plus(a[i], b[i]);
+		poly res = a;
+		for (register int i = 0; i < n; ++i) inc(res[i], b[i]);
 		return res;
 	}
 	poly Minus(poly a, poly b){
 		int n = std :: max(a.size(), b.size());
 		a.resize(n), b.resize(n);
-		poly res(n);
-		for (register int i = 0; i < n; ++i) res[i] = minus(a[i], b[i]);
+		poly res = a;
+		for (register int i = 0; i < n; ++i) dec(res[i], b[i]);
 		return res;
 	}
-	poly Multiply(poly a, poly b){
-		if (!a.size() || !b.size()) return {};
-		if (a.size() <= 30 && b.size() <= 30){
+	poly Multiply(poly a, poly b, int _n = -1){
+		if (!a.size() || !b.size() || !_n) return {};
+		if (_n == -1) _n = a.size() + b.size() - 1;
+		if (a.size() <= 30 || b.size() <= 30){
 			poly res(a.size() + b.size() - 1);
-			for (register int i = 0; i < a.size(); ++i)
-				for (register int j = 0; j < b.size(); ++j)
-					res[i + j] = (res[i + j] + 1ll * a[i] * b[j]) % P;
-			return res;
+			for (register int i = 0; i < (int)a.size(); ++i)
+				for (register int j = 0; j < (int)b.size(); ++j)
+					res[i + j] = (res[i + j] + 1ull * a[i] * b[j]) % P;
+			for (register int i = _n; i < (int)res.size(); ++i) inc(res[i % _n], res[i]);
+			return res.resize(_n), res;
 		}
-		int _n = a.size() + b.size() - 1, n = get(_n);
+		int n = get(_n);
 		init(n), DFT(a, n), DFT(b, n);
-		for (register int i = 0; i < n; ++i) a[i] = 1ll * a[i] * b[i] % P;
+		for (register int i = 0; i < n; ++i) a[i] = mul(a[i], b[i]);
 		IDFT(a, n), a.resize(_n);
 		return a;
 	}
 	poly Pow2(poly a){
 		int _n = a.size() * 2 - 1, n = get(_n);
 		init(n), DFT(a, n);
-		for (register int i = 0; i < n; ++i) a[i] = 1ll * a[i] * a[i] % P;
+		for (register int i = 0; i < n; ++i) a[i] = mul(a[i], a[i]);
 		IDFT(a, n), a.resize(_n);
 		return a;
 	}
@@ -118,14 +136,13 @@ namespace Polynomial{
 		f.resize(n);
 		poly g(1);
 		g[0] = qpow(f[0], P - 2);
-		for (register int m = 2; m <= n; ){
+		for (register int m = 2; m <= n; m <<= 1){
 			poly tmp(m);
 			for (register int i = 0; i < m; ++i) tmp[i] = f[i];
-			m <<= 1;
-			init(m), DFT(tmp, m), DFT(g, m);
-			for (register int i = 0; i < m; ++i)
-				g[i] = 1ll * g[i] * minus(2, 1ll * g[i] * tmp[i] % P) % P;
-			IDFT(g, m), g.resize(m >> 1);
+			register int l = m << 1;
+			init(l), DFT(tmp, l), DFT(g, l);
+			for (register int i = 0; i < l; ++i) g[i] = mul(g[i], minus(2, mul(tmp[i], g[i])));
+			IDFT(g, l), g.resize(m);
 		}
 		return g.resize(_n), g;
 	}
@@ -141,83 +158,84 @@ namespace Polynomial{
 		R = Minus(a, Multiply(b, Q)), R.resize(m - 1);
 		return std :: make_pair(Q, R);
 	}
-	poly Derivative(const poly &a){
-		int n = a.size();
-		poly res(n - 1);
-		for (register int i = 1; i < n; ++i) res[i - 1] = 1ll * a[i] * i % P;
-		return res;
+	poly Derivative(poly f){
+		int n = f.size();
+		for (register int i = 1; i < n; ++i) f[i - 1] = mul(f[i], i);
+		return f.resize(n - 1), f;
 	}
-	poly Integral(const poly &a){
-		int n = a.size();
-		poly res(n + 1), inv(n + 1);
-		res[0] = 0, inv[1] = 1;
-		for (register int i = 2; i <= n; ++i) inv[i] = 1ll * (P - P / i) * inv[P % i] % P;
-		for (register int i = 1; i <= n; ++i) res[i] = 1ll * a[i - 1] * inv[i] % P;
-		return res;
+	poly Integral(poly f){
+		f.push_back(0);
+		int n = f.size();
+		for (register int i = n - 1; i; --i) f[i] = mul(f[i - 1], inv[i]);
+		return f[0] = 0, f;
 	}
 	poly Ln(const poly &a, int n){
 		poly res = Integral(Multiply(Derivative(a), Inverse(a, n)));
 		return res.resize(n), res;
 	}
-	poly Exp(poly f, int _n){
-		int n = get(_n);
-		f.resize(n);
-		poly g(1);
-		g[0] = 1;
-		for (register int m = 2; m <= n; ){
-			poly tmp = Ln(g, m);
-			for (register int i = 0; i < m; ++i) tmp[i] = minus(f[i], tmp[i]);
-			inc(tmp[0], 1);
-			m <<= 1, init(m), DFT(tmp, m), DFT(g, m);
-			for (register int i = 0; i < m; ++i) g[i] = 1ll * g[i] * tmp[i] % P;
-			IDFT(g, m), g.resize(m >> 1);
-		}
-		return g.resize(_n), g;
+	// poly Exp(poly f, int _n){
+	// 	int n = get(_n);
+	// 	f.resize(n);
+	// 	poly g(1);
+	// 	g[0] = 1;
+	// 	for (register int m = 2; m <= n; m <<= 1){
+	// 		poly tmp = Ln(g, m);
+	// 		for (register int i = 0; i < m; ++i) tmp[i] = minus(f[i], tmp[i]);
+	// 		inc(tmp[0], 1);
+	// 		register int l = m << 1;
+	// 		init(l), DFT(tmp, l), DFT(g, l);
+	// 		for (register int i = 0; i < l; ++i) g[i] = mul(g[i], tmp[i]);
+	// 		IDFT(g, l), g.resize(m);
+	// 	}
+	// 	return g.resize(_n), g;
+	// }
+	void Exp_solve(const poly &a, poly &b, int l, int r){
+		if (l + 1 == r) return l ? b[l] = 1ll * b[l] * inv[l] % P : b[l] = 1, void(0);
+		int md = (l + r + 1) >> 1;
+		Exp_solve(a, b, l, md);
+		poly res = Multiply(poly(b.begin() + l, b.begin() + md), poly(a.begin(), a.begin() + r - l - 1), r - l - 1);
+		for (register int i = md; i < r; ++i) inc(b[i], res[i - l - 1]);
+		Exp_solve(a, b, md, r);
 	}
-	// void Exp_solve(const poly &a, poly &b, const poly &inv, int l, int r){
-	// 	if (l + 1 == r) return l ? b[l] = 1ll * b[l] * inv[l] % P : b[l] = 1, void(0);
-	// 	int md = (l + r + 1) >> 1;
-	// 	Exp_solve(a, b, inv, l, md);
-	// 	poly res = Multiply(poly(b.begin() + l, b.begin() + md), poly(a.begin(), a.begin() + r - l - 1));
-	// 	for (register int i = md; i < r; ++i) inc(b[i], res[i - l - 1]);
-	// 	Exp_solve(a, b, inv, md, r);
-	// }
-	// poly Exp(poly a, int _n){
-	// 	a = Derivative(a), a.resize(_n);
-	// 	poly b(_n), inv(_n);
-	// 	inv[1] = 1;
-	// 	for (register int i = 2; i < _n; ++i) inv[i] = 1ll * (P - P / i) * inv[P % i] % P;
-	// 	return Exp_solve(a, b, inv, 0, _n), b;
-	// }
+	poly Exp(poly a, int _n){
+		a = Derivative(a), a.resize(_n);
+		poly res(_n);
+		return Exp_solve(a, res, 0, _n), res;
+	}
 	poly Pow(poly a, int k, int n){
 		a.resize(n);
 		int t = n;
 		for (register int i = 0; i < n; ++i)
 			if (a[i]){ t = i; break; }
 		if (t == n) return !k ? a[0] = 1 : 0, a;
-		int vi = qpow(a[t], P - 2), vk = qpow(a[t], k);
-		for (register int i = 0; i < n - t; ++i) a[i] = 1ll * a[i + t] * vi % P;
+		unsigned vi = qpow(a[t], P - 2), vk = qpow(a[t], k);
+		for (register int i = 0; i < n - t; ++i) a[i] = mul(a[i + t], vi);
 		a.resize(n - t);
 		t = std :: min(1ll * t * k, 1ll * n);
+		if (t == n){
+			a.resize(n);
+			for (register int i = 0; i < n; ++i) a[i] = 0;
+			return a;
+		}
 		a = Ln(a, n - t);
-		for (register int i = 0; i < n - t; ++i) a[i] = 1ll * a[i] * k % P;
+		for (register int i = 0; i < n - t; ++i) a[i] = mul(a[i], k);
 		a = Exp(a, n - t), a.resize(n);
-		for (register int i = n - t - 1; ~i; --i) a[i + t] = 1ll * a[i] * vk % P;
+		for (register int i = n - t - 1; ~i; --i) a[i + t] = mul(a[i], vk);
 		for (register int i = 0; i < t; ++i) a[i] = 0;
 		return a;
 	}
 	struct Complex{
 		int ii;
 		struct node{
-			int x, y;
+			unsigned x, y;
 			node(){}
-			node(int _x, int _y){ x = _x, y = _y; }
+			node(unsigned _x, unsigned _y){ x = _x, y = _y; }
 		};
 		node mul(const node &a, const node &b){
-			return node((1ll * a.x * b.x + 1ll * ii * a.y % P * b.y) % P,
-						(1ll * a.x * b.y + 1ll * a.y * b.x) % P);
+			return node((1ull * a.x * b.x + 1ull * ii * a.y % P * b.y) % P,
+						(1ull * a.x * b.y + 1ull * a.y * b.x) % P);
 		}
-		node qpow(node a, int b){
+		node qpow(node a, unsigned b){
 			node s = node(1, 0);
 			for (; b; b >>= 1, a = mul(a, a)) if (b & 1) s = mul(s, a);
 			return s;
@@ -226,11 +244,11 @@ namespace Polynomial{
 	int Sqrt(int n){
 		if (qpow(n, (P - 1) >> 1) != 1) return -1;
 		srnd(time(0));
-		int a = rnd() % P;
-		while (qpow((1ll * a * a + P - n) % P, (P - 1) >> 1) == 1) a = rnd() % P;
+		unsigned a = rnd() % P;
+		while (qpow((1ull * a * a + P - n) % P, (P - 1) >> 1) == 1) a = rnd() % P;
 		Complex T;
-		T.ii = (1ll * a * a + P - n) % P;
-		int res = T.qpow(Complex :: node(a, 1), (P + 1) >> 1).x;
+		T.ii = (1ull * a * a + P - n) % P;
+		unsigned res = T.qpow(Complex :: node(a, 1), (P + 1) >> 1).x;
 		return std :: min(res, P - res);
 	}
 	poly Sqrt(poly f, int _n){
@@ -239,10 +257,11 @@ namespace Polynomial{
 		poly g(1);
 		g[0] = Sqrt(f[0]);
 		for (register int m = 2; m <= n; m <<= 1){
-			poly tmp(m);
-			for (register int i = 0; i < m; ++i) tmp[i] = f[i];
-			g = Multiply(Plus(Pow2(g), tmp), Inverse(g, m)), g.resize(m);
-			for (register int i = 0; i < m; ++i) g[i] = 1ll * g[i] * I2 % P;
+			poly tmp = Pow2(g);
+			tmp.resize(m);
+			for (register int i = 0; i < m; ++i) inc(tmp[i], f[i]);
+			g = Multiply(tmp, Inverse(g, m)), g.resize(m);
+			for (register int i = 0; i < m; ++i) g[i] = mul(g[i], inv[2]);
 		}
 		return g.resize(_n), g;
 	}
@@ -266,10 +285,10 @@ namespace Polynomial{
 		return u;
 	}
 	void Evaluate_solve(const poly &f, const poly &x, poly &y, int u, int l, int r){
-		if (r - l <= 512){
+		if (r - l <= 256){
 			register int n = f.size();
 			for (register int k = l; k < r; ++k){
-				register int now = 0;
+				register unsigned now = 0;
 				register unsigned long long b[17], c1, c2, c3, c4;
 				b[0] = 1;
 				for (register int i = 1; i <= 16; ++i) b[i] = b[i - 1] * x[k] % P;
@@ -280,7 +299,7 @@ namespace Polynomial{
 					c4 = f[i - 11] * b[4] + f[i - 12] * b[3] + f[i - 13] * b[2] + f[i - 14] * b[1];
 					now = (c1 + c2 + c3 + c4 + f[i - 15]) % P;
 				}
-				for (register int i = n % 16 - 1; ~i; --i) now = (1ll * now * x[k] + f[i]) % P;
+				for (register int i = n % 16 - 1; ~i; --i) now = (1ull * now * x[k] + f[i]) % P;
 				y[k] = now;
 			}
 			return;
@@ -304,7 +323,7 @@ namespace Polynomial{
 		poly b(n - 1);
 		for (register int i = n - 1; i; --i){
 			b[i - 1] = a[i];
-			dec(a[i - 1], 1ll * a[i] * t % P);
+			dec(a[i - 1], mul(a[i], t));
 		}
 		return b;
 	}
@@ -313,16 +332,16 @@ namespace Polynomial{
 			poly f(r - l), g = _T[u].g;
 			for (register int i = l; i < r; ++i){
 				poly tmp = Divide_2(g, minus(0, x[i]));
-				for (register int j = 0; j < r - l; ++j) f[j] = (f[j] + 1ll * tmp[j] * y[i]) % P;
+				for (register int j = 0; j < r - l; ++j) f[j] = (f[j] + 1ull * tmp[j] * y[i]) % P;
 			}
 			return f;
 		}
 		int md = (l + r + 1) >> 1;
 		poly A = _T[_T[u].rs].g, B = Inter_solve(x, y, _T[u].ls, l, md);
 		poly C = _T[_T[u].ls].g, D = Inter_solve(x, y, _T[u].rs, md, r);
-		int m = get(r - l);
+		register int m = get(r - l);
 		init(m), DFT(A, m), DFT(B, m), DFT(C, m), DFT(D, m);
-		for (register int i = 0; i < m; ++i) A[i] = (1ll * A[i] * B[i] + 1ll * C[i] * D[i]) % P;
+		for (register int i = 0; i < m; ++i) A[i] = (1ull * A[i] * B[i] + 1ull * C[i] * D[i]) % P;
 		IDFT(A, m), A.resize(r - l);
 		return A;
 	}
@@ -332,16 +351,29 @@ namespace Polynomial{
 		poly g = Derivative(_T[rt].g);
 		poly res(n);
 		Evaluate_solve(g, x, res, rt, 0, n);
-		for (register int i = 0; i < n; ++i) y[i] = 1ll * y[i] * qpow(res[i], P - 2) % P;
+		for (register int i = 0; i < n; ++i) y[i] = mul(y[i], qpow(res[i], P - 2));
 		return Inter_solve(x, y, rt, 0, n);
 	}
 }
 using Polynomial :: poly;
-using Polynomial :: Interpolation;
+using Polynomial :: Derivative;
+using Polynomial :: Integral;
+using Polynomial :: Inverse;
+using Polynomial :: Ln;
+using Polynomial :: Exp;
+using Polynomial :: Pow;
+using Polynomial :: Sqrt;
+using Polynomial :: Minus;
+using Polynomial :: inc;
+using Polynomial :: dec;
 int main(){
-	int n = read();
-	poly x(n), y(n);
-	for (register int i = 0; i < n; ++i) x[i] = read(), y[i] = read();
-	poly res = Interpolation(x, y);
-	for (register int i = 0; i < n; ++i) print(res[i], ' ');
+	Polynomial :: Init();
+	int n = read() + 1, k = read();
+	poly f(n);
+	for (register int i = 0; i < n; ++i) f[i] = read();
+	poly g = Minus(f, Exp(Integral(Inverse(Sqrt(f, n - 1), n - 1)), n));
+	inc(g[0], 2), dec(g[0], f[0]);
+	g = Ln(g, n), inc(g[0], 1);
+	g = Derivative(Pow(g, k, n));
+	for (register int i = 0; i < g.size(); ++i) print(g[i], ' ');
 }
