@@ -32,7 +32,7 @@ struct Segment_Tree{
 		build(u << 1, l, md), build(u << 1 | 1, md + 1, r);
 	}
 	void mul(int u, int v){
-		lz[u] += pw[v], g[u] = 1ll * g[u] * pw[v] % P;
+		lz[u] += v, g[u] = 1ll * g[u] * pwi[v] % P;
 	}
 	void down(int u){
 		if (lz[u]) mul(u << 1, lz[u]), mul(u << 1 | 1, lz[u]), lz[u] = 0;
