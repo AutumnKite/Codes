@@ -4,8 +4,8 @@
 #include <algorithm>
 #include <vector>
 typedef unsigned long long ull;
-char buf[1 << 23], *ps = buf, *pt = buf;
-#define getchar() (ps == pt && (pt = (ps = buf) + fread(buf, 1, 1 << 23, stdin), ps == pt) ? EOF : *ps++)
+// char buf[1 << 23], *ps = buf, *pt = buf;
+// #define getchar() (ps == pt && (pt = (ps = buf) + fread(buf, 1, 1 << 23, stdin), ps == pt) ? EOF : *ps++)
 ull read(){
 	register ull x = 0;
 	register char ch = getchar();
@@ -13,9 +13,9 @@ ull read(){
 	for (; isdigit(ch); ch = getchar()) x = (x << 1) + (x << 3) + (ch ^ '0');
 	return x;
 }
-char pbuf[1 << 23], *pp = pbuf;
-#define putchar(x) (pp == pbuf + (1 << 23) ? fwrite(pbuf, 1, 1 << 23, stdout), pp = pbuf : 0, *pp++ = x)
-struct __IO_flusher{ ~__IO_flusher(){ fwrite(pbuf, 1, pp - pbuf, stdout); } } IO_flusher;
+// char pbuf[1 << 23], *pp = pbuf;
+// #define putchar(x) (pp == pbuf + (1 << 23) ? fwrite(pbuf, 1, 1 << 23, stdout), pp = pbuf : 0, *pp++ = x)
+// struct __IO_flusher{ ~__IO_flusher(){ fwrite(pbuf, 1, pp - pbuf, stdout); } } IO_flusher;
 void print(ull x, char ch = '\n'){
 	if (x == 0) return putchar('0'), putchar(ch), void(0);
 	int cnt = 0, num[25];
@@ -31,14 +31,14 @@ int fa[N], dep[N], sz[N], son[N];
 int tp[N], idx, dfn[N], idt[N];
 void dfs(int u){
 	dep[u] = dep[fa[u]] + 1, sz[u] = 1, son[u] = 0;
-	for (int v : E[u])
-		if (v != fa[u]) fa[v] = u, dfs(v), sz[u] += sz[v], !son[u] || sz[v] > sz[son[u]] ? son[u] = v : 0;
+	for (register int i = 0, v; i < (int)E[u].size(); ++i)
+		if ((v = E[u][i]) != fa[u]) fa[v] = u, dfs(v), sz[u] += sz[v], !son[u] || sz[v] > sz[son[u]] ? son[u] = v : 0;
 }
 void dfs(int u, int _tp){
 	tp[u] = _tp, dfn[u] = ++idx, idt[idx] = u;
 	if (son[u]) dfs(son[u], _tp);
-	for (int v : E[u])
-		if (v != fa[u] && v != son[u]) dfs(v, v);
+	for (register int i = 0, v; i < (int)E[u].size(); ++i)
+		if ((v = E[u][i]) != fa[u] && v != son[u]) dfs(v, v);
 }
 struct node{
 	ull v0, v1;
@@ -79,20 +79,25 @@ struct Segment_Tree{
 }T;
 ull query(int u, int v, ull w){
 	node s = {0ull, ~0ull};
+	std::vector<node> qu, qv;
 	while (tp[u] != tp[v]){
 		if (dep[tp[u]] > dep[tp[v]])
-			s = s + T.query(1, 1, n, dfn[tp[u]], dfn[u], 1), u = fa[tp[u]];
+			qu.push_back(T.query(1, 1, n, dfn[tp[u]], dfn[u], 1)), u = fa[tp[u]];
 		else
-			s = s + T.query(1, 1, n, dfn[tp[v]], dfn[v], 0), v = fa[tp[v]];
+			qv.push_back(T.query(1, 1, n, dfn[tp[v]], dfn[v], 0)), v = fa[tp[v]];
 	}
-	if (dep[u] > dep[v]) s = s + T.query(1, 1, n, dfn[v], dfn[u], 1);
-	else s = s + T.query(1, 1, n, dfn[u], dfn[v], 0);
+	if (dep[u] > dep[v]) qu.push_back(T.query(1, 1, n, dfn[v], dfn[u], 1));
+	else qv.push_back(T.query(1, 1, n, dfn[u], dfn[v], 0));
+	for (register int i = 0; i < (int)qu.size(); ++i) s = s + qu[i];
+	for (register int i = (int)qv.size() - 1; ~i; --i) s = s + qv[i];
 	bool flag = 1;
 	ull res = 0;
 	for (register int i = 63; ~i; --i){
-		if (flag && !(w >> i & 1)) res |= s.v0 & (1 << i);
-		else 
+		if (flag && !(w >> i & 1)) res |= s.v0 & (1ull << i);
+		else if ((s.v1 >> i & 1) > (s.v0 >> i & 1)) flag &= w >> i & 1, res |= s.v1 & (1ull << i);
+		else flag = 0, res |= s.v0 & (1ull << i);
 	}
+	return res;
 }
 int main(){
 	n = read(), m = read(), k = read();
@@ -103,7 +108,7 @@ int main(){
 	while (m--){
 		int opt = read(), x = read(), y = read();
 		ull z = read();
-		if (opt == 1) ; //...
+		if (opt == 1) print(query(x, y, z));
 		else T.modify(1, 1, n, dfn[x], y, z);
 	}
 }
