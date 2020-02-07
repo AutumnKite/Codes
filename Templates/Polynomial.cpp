@@ -32,7 +32,7 @@ namespace Random_Number{
 using namespace Random_Number;
 namespace Polynomial{
 #define MAX_LEN 262144
-	typedef std :: vector<unsigned> poly;
+	typedef std::vector<unsigned> poly;
 	const unsigned P = 998244353, G = 3;
 	poly rev;
 	unsigned omega[MAX_LEN], inv[MAX_LEN];
@@ -89,19 +89,19 @@ namespace Polynomial{
 		for (register int i = 0; i < n; ++i) f[i] = ft[i] % P;
 	}
 	void IDFT(poly &f, int n){
-		DFT(f, n), std :: reverse(f.begin() + 1, f.end());
+		DFT(f, n), std::reverse(f.begin() + 1, f.end());
 		unsigned t = qpow(n, P - 2);
 		for (register int i = 0; i < n; ++i) f[i] = mul(f[i], t);
 	}
 	poly Plus(poly a, poly b){
-		int n = std :: max(a.size(), b.size());
+		int n = std::max(a.size(), b.size());
 		a.resize(n), b.resize(n);
 		poly res = a;
 		for (register int i = 0; i < n; ++i) inc(res[i], b[i]);
 		return res;
 	}
 	poly Minus(poly a, poly b){
-		int n = std :: max(a.size(), b.size());
+		int n = std::max(a.size(), b.size());
 		a.resize(n), b.resize(n);
 		poly res = a;
 		for (register int i = 0; i < n; ++i) dec(res[i], b[i]);
@@ -146,17 +146,17 @@ namespace Polynomial{
 		}
 		return g.resize(_n), g;
 	}
-	std :: pair<poly, poly> Divide(const poly &a, const poly &b){
+	std::pair<poly, poly> Divide(const poly &a, const poly &b){
 		int n = a.size(), m = b.size();
 		poly Q, R;
-		if (n < m) return R = a, R.resize(m - 1), std :: make_pair(Q, R);
+		if (n < m) return R = a, R.resize(m - 1), std::make_pair(Q, R);
 		poly A(a), B(b);
-		std :: reverse(A.begin(), A.end()), A.resize(n - m + 1);
-		std :: reverse(B.begin(), B.end()), B.resize(n - m + 1);
+		std::reverse(A.begin(), A.end()), A.resize(n - m + 1);
+		std::reverse(B.begin(), B.end()), B.resize(n - m + 1);
 		Q = Multiply(A, Inverse(B, n - m + 1));
-		Q.resize(n - m + 1), std :: reverse(Q.begin(), Q.end());
+		Q.resize(n - m + 1), std::reverse(Q.begin(), Q.end());
 		R = Minus(a, Multiply(b, Q)), R.resize(m - 1);
-		return std :: make_pair(Q, R);
+		return std::make_pair(Q, R);
 	}
 	poly Derivative(poly f){
 		int n = f.size();
@@ -211,7 +211,7 @@ namespace Polynomial{
 		unsigned vi = qpow(a[t], P - 2), vk = qpow(a[t], k);
 		for (register int i = 0; i < n - t; ++i) a[i] = mul(a[i + t], vi);
 		a.resize(n - t);
-		t = std :: min(1ll * t * k, 1ll * n);
+		t = std::min(1ll * t * k, 1ll * n);
 		if (t == n){
 			a.resize(n);
 			for (register int i = 0; i < n; ++i) a[i] = 0;
@@ -248,8 +248,8 @@ namespace Polynomial{
 		while (qpow((1ull * a * a + P - n) % P, (P - 1) >> 1) == 1) a = rnd() % P;
 		Complex T;
 		T.ii = (1ull * a * a + P - n) % P;
-		unsigned res = T.qpow(Complex :: node(a, 1), (P + 1) >> 1).x;
-		return std :: min(res, P - res);
+		unsigned res = T.qpow(Complex::node(a, 1), (P + 1) >> 1).x;
+		return std::min(res, P - res);
 	}
 	poly Sqrt(poly f, int _n){
 		int n = get(_n);
@@ -270,7 +270,7 @@ namespace Polynomial{
 		poly g;
 	};
 	int _T_cnt;
-	std :: vector<tree_node> _T;
+	std::vector<tree_node> _T;
 	int eval_inter_init(const poly &x, int l, int r){
 		int u = _T_cnt++;
 		_T[u].ls = _T[u].rs = -1, _T[u].g.resize(r - l + 1);
@@ -355,19 +355,19 @@ namespace Polynomial{
 		return Inter_solve(x, y, rt, 0, n);
 	}
 }
-using Polynomial :: poly;
-using Polynomial :: Derivative;
-using Polynomial :: Integral;
-using Polynomial :: Inverse;
-using Polynomial :: Ln;
-using Polynomial :: Exp;
-using Polynomial :: Pow;
-using Polynomial :: Sqrt;
-using Polynomial :: Minus;
-using Polynomial :: inc;
-using Polynomial :: dec;
+using Polynomial::poly;
+using Polynomial::Derivative;
+using Polynomial::Integral;
+using Polynomial::Inverse;
+using Polynomial::Ln;
+using Polynomial::Exp;
+using Polynomial::Pow;
+using Polynomial::Sqrt;
+using Polynomial::Minus;
+using Polynomial::inc;
+using Polynomial::dec;
 int main(){
-	Polynomial :: Init();
+	Polynomial::Init();
 	int n = read() + 1, k = read();
 	poly f(n);
 	for (register int i = 0; i < n; ++i) f[i] = read();
