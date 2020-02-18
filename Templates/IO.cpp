@@ -2,6 +2,7 @@
 #include <cctype>
 #include <cstring>
 #include <algorithm>
+#include <vector>
 namespace fastIO{
 #define getchar() my_getchar()
 #define putchar(x) my_putchar(x)
@@ -34,9 +35,9 @@ namespace fastIO{
 	}
 	template<typename T> inline void print_(T x){
 		if (x == 0) return putchar('0'), void(0);
-		int cnt = 0, num[25];
-		for (x < 0 ? putchar('-'), x = -x : 0; x; x /= 10) num[++cnt] = x % 10;
-		while (cnt) putchar(num[cnt] ^ '0'), --cnt;
+		std::vector<int> num;
+		for (x < 0 ? putchar('-'), x = -x : 0; x; x /= 10) num.push_back(x % 10);
+		while (!num.empty()) putchar(num.back() ^ '0'), num.pop_back();
 	}
 	template<typename T> inline void print(T x, char ch = '\n'){
 		print_(x), putchar(ch);
@@ -51,11 +52,17 @@ namespace fastIO{
 	template<typename T> inline void printd_(T x, int n){
 		if (x < 0) x = -x, putchar('-');
 		long long a, b;
-		if (n == 0) return a = x + 0.5, print_(a), void(0);
+		for (register int i = 0; i < n; ++i) x *= 10;
+		x = (long long)(x + 0.5);
+		for (register int i = 0; i < n; ++i) x /= 10;
 		a = x, x -= a;
-		while (n--) x *= 10;
-		b = x + 0.5;
-		print_(a), putchar('.'), print_(b);
+		for (register int i = 0; i < n; ++i) x *= 10;
+		b = x;
+		print_(a);
+		if (n) putchar('.'); else return;
+		std::vector<int> num(n);
+		for (register int i = 0; i < n; ++i) num[i] = b % 10, b /= 10;
+		while (!num.empty()) putchar(num.back() ^ '0'), num.pop_back();
 	}
 	template<typename T> inline void printd(T x, int n, char ch = '\n'){
 		printd_(x, n), putchar(ch);
@@ -89,24 +96,29 @@ int main(){
 A test Data:
 
 Input:
-3
+4
 abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
 19260817 -19260817
 33445566 -92758436
 -348935545 -358949545
+0 100
 155.255949646856 1
--0.259213 5
+-0.999999 5
 -998.23456789015 7
+5.00000000 10
 
 Output:
 bcded
 
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+b
 0
 -59312870
 -707885090
+100
 155.3
--0.25921
+-1.00000
 -998.2345679
+5.0000000000
 */
