@@ -6,9 +6,10 @@
 namespace fastIO{
 #define getchar() my_getchar()
 #define putchar(x) my_putchar(x)
+#define debug(...) fprintf(stderr, __VA_ARGS__)
 	static const int IN_BUF = 1 << 23, OUT_BUF = 1 << 23;
 	char buf[IN_BUF], *ps = buf, *pt = buf;
-	inline char my_getchar() {
+	inline char my_getchar(){
 		return ps == pt && (pt = (ps = buf) + fread(buf, 1, IN_BUF, stdin), ps == pt) ? EOF : *ps++;
 	}
 	template<typename T> inline bool read(T &x){
@@ -69,26 +70,17 @@ namespace fastIO{
 	}
 }
 using namespace fastIO;
-const int N = 1000005;
-int n;
-char a[N];
+int n, m;
 void solve(){
-	read(n), reads(a + 1);
-	int now = 0, ans = 0;
-	for (register int i = 1; i <= n; ++i)
-		if (a[i] == ')'){
-			--now;
-			if (now < 0) ++ans;
-		}
-		else{
-			++now;
-			if (now <= 0) ++ans;
-		}
-	if (now) ans = -1;
-	print(ans);
+	read(n), read(m);
+	if (n % m == 0) prints("YES"); else prints("NO");
 }
 int main(){
+#ifdef AT_HOME
+	freopen("test.in", "r", stdin);
+	freopen("test.out", "w", stdout);
+#endif
 	int T = 1;
-	// read(T);
+	read(T);
 	while (T--) solve();
 }

@@ -6,9 +6,10 @@
 namespace fastIO{
 #define getchar() my_getchar()
 #define putchar(x) my_putchar(x)
+#define debug(...) fprintf(stderr, __VA_ARGS__)
 	static const int IN_BUF = 1 << 23, OUT_BUF = 1 << 23;
 	char buf[IN_BUF], *ps = buf, *pt = buf;
-	inline char my_getchar() {
+	inline char my_getchar(){
 		return ps == pt && (pt = (ps = buf) + fread(buf, 1, IN_BUF, stdin), ps == pt) ? EOF : *ps++;
 	}
 	template<typename T> inline bool read(T &x){
@@ -69,25 +70,30 @@ namespace fastIO{
 	}
 }
 using namespace fastIO;
-const int N = 1000005;
-int n;
-char a[N];
+const int N = 505;
+int n, a[N], f[N][N], g[N];
 void solve(){
-	read(n), reads(a + 1);
-	int now = 0, ans = 0;
-	for (register int i = 1; i <= n; ++i)
-		if (a[i] == ')'){
-			--now;
-			if (now < 0) ++ans;
+	read(n);
+	for (register int i = 1; i <= n; ++i) read(a[i]), f[i][i] = a[i];
+	for (register int len = 2; len <= n; ++len)
+		for (register int i = 1, j = len; j <= n; ++i, ++j){
+			f[i][j] = 0;
+			for (register int k = i; k < j; ++k)
+				if (f[i][k] && f[k + 1][j] && f[i][k] == f[k + 1][j]) f[i][j] = f[i][k] + 1;
 		}
-		else{
-			++now;
-			if (now <= 0) ++ans;
-		}
-	if (now) ans = -1;
-	print(ans);
+	g[0] = 0;
+	for (register int i = 1; i <= n; ++i){
+		g[i] = i;
+		for (register int j = 0; j < i; ++j)
+			if (f[j + 1][i]) g[i] = std::min(g[i], g[j] + 1);
+	}
+	print(g[n]);
 }
 int main(){
+#ifdef AT_HOME
+	freopen("test.in", "r", stdin);
+	freopen("test.out", "w", stdout);
+#endif
 	int T = 1;
 	// read(T);
 	while (T--) solve();

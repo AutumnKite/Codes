@@ -6,9 +6,10 @@
 namespace fastIO{
 #define getchar() my_getchar()
 #define putchar(x) my_putchar(x)
+#define debug(...) fprintf(stderr, __VA_ARGS__)
 	static const int IN_BUF = 1 << 23, OUT_BUF = 1 << 23;
 	char buf[IN_BUF], *ps = buf, *pt = buf;
-	inline char my_getchar() {
+	inline char my_getchar(){
 		return ps == pt && (pt = (ps = buf) + fread(buf, 1, IN_BUF, stdin), ps == pt) ? EOF : *ps++;
 	}
 	template<typename T> inline bool read(T &x){
@@ -69,26 +70,31 @@ namespace fastIO{
 	}
 }
 using namespace fastIO;
-const int N = 1000005;
-int n;
-char a[N];
+int n, k;
+long long a[35];
+bool vis[65];
 void solve(){
-	read(n), reads(a + 1);
-	int now = 0, ans = 0;
-	for (register int i = 1; i <= n; ++i)
-		if (a[i] == ')'){
-			--now;
-			if (now < 0) ++ans;
+	read(n), read(k);
+	memset(vis, 0, sizeof vis);
+	for (register int i = 1; i <= n; ++i) read(a[i]);
+	for (register int i = 1; i <= n; ++i){
+		long long x = a[i];
+		for (register int j = 0; x; x /= k, ++j){
+			// debug("%d %d\n", x, j);
+			if (x % k == 0) continue;
+			if (x % k > 1) return prints("NO"), void(0);
+			if (vis[j]) return prints("NO"), void(0);
+			vis[j] = 1;
 		}
-		else{
-			++now;
-			if (now <= 0) ++ans;
-		}
-	if (now) ans = -1;
-	print(ans);
+	}
+	prints("YES");
 }
 int main(){
+#ifdef AT_HOME
+	freopen("test.in", "r", stdin);
+	freopen("test.out", "w", stdout);
+#endif
 	int T = 1;
-	// read(T);
+	read(T);
 	while (T--) solve();
 }

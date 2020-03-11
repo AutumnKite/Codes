@@ -6,9 +6,10 @@
 namespace fastIO{
 #define getchar() my_getchar()
 #define putchar(x) my_putchar(x)
+#define debug(...) fprintf(stderr, __VA_ARGS__)
 	static const int IN_BUF = 1 << 23, OUT_BUF = 1 << 23;
 	char buf[IN_BUF], *ps = buf, *pt = buf;
-	inline char my_getchar() {
+	inline char my_getchar(){
 		return ps == pt && (pt = (ps = buf) + fread(buf, 1, IN_BUF, stdin), ps == pt) ? EOF : *ps++;
 	}
 	template<typename T> inline bool read(T &x){
@@ -69,25 +70,29 @@ namespace fastIO{
 	}
 }
 using namespace fastIO;
-const int N = 1000005;
-int n;
-char a[N];
+const int P = 998244353;
+int n, m;
+int qpow(int a, int b){
+	int s = 1;
+	for (; b; b >>= 1, a = 1ll * a * a % P) if (b & 1) s = 1ll * s * a % P;
+	return s;
+}
 void solve(){
-	read(n), reads(a + 1);
-	int now = 0, ans = 0;
-	for (register int i = 1; i <= n; ++i)
-		if (a[i] == ')'){
-			--now;
-			if (now < 0) ++ans;
-		}
-		else{
-			++now;
-			if (now <= 0) ++ans;
-		}
-	if (now) ans = -1;
+	read(n), read(m);
+	if (n < 3 || n - 1 > m) return print(0), void(0);
+	int ans = 1;
+	for (register int i = 1; i <= n - 1; ++i)
+		ans = 1ll * ans * (m - i + 1) % P * qpow(i, P - 2) % P;
+	for (register int i = 1; i <= n - 3; ++i)
+		ans = 2ll * ans % P;
+	ans = 1ll * ans * (n - 2) % P;
 	print(ans);
 }
 int main(){
+#ifdef AT_HOME
+	freopen("test.in", "r", stdin);
+	freopen("test.out", "w", stdout);
+#endif
 	int T = 1;
 	// read(T);
 	while (T--) solve();

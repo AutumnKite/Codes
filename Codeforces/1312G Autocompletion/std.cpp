@@ -3,12 +3,14 @@
 #include <cstring>
 #include <algorithm>
 #include <vector>
+#include <set>
 namespace fastIO{
 #define getchar() my_getchar()
 #define putchar(x) my_putchar(x)
+#define debug(...) fprintf(stderr, __VA_ARGS__)
 	static const int IN_BUF = 1 << 23, OUT_BUF = 1 << 23;
 	char buf[IN_BUF], *ps = buf, *pt = buf;
-	inline char my_getchar() {
+	inline char my_getchar(){
 		return ps == pt && (pt = (ps = buf) + fread(buf, 1, IN_BUF, stdin), ps == pt) ? EOF : *ps++;
 	}
 	template<typename T> inline bool read(T &x){
@@ -70,24 +72,42 @@ namespace fastIO{
 }
 using namespace fastIO;
 const int N = 1000005;
-int n;
-char a[N];
+int n, k, id[N], sp[N];
+char fw[N], tmp[5];
+std::vector<int> E[N];
+int idx, dfn[N], cnt[N];
+void dfs(int u){
+	dfn[u] = ++idx, cnt[idx] = sp[u];
+	for (int v : E[u]) dfs(v);
+}
+int f[N];
+std::multiset<int> S;
+void DP(int u, int fa = -1){
+	if (~fa) f[u] = f[fa] + 1; else f[u] = 0;
+	if (sp[u]) f[u] = std::min(f[u], *S.begin() + cnt[dfn[u]]);
+	int val = f[u] - (dfn[u] ? cnt[dfn[u] - 1] : 0);
+	S.insert(val);
+	for (int v : E[u]) DP(v, u);
+	S.erase(S.find(val));
+}
 void solve(){
-	read(n), reads(a + 1);
-	int now = 0, ans = 0;
-	for (register int i = 1; i <= n; ++i)
-		if (a[i] == ')'){
-			--now;
-			if (now < 0) ++ans;
-		}
-		else{
-			++now;
-			if (now <= 0) ++ans;
-		}
-	if (now) ans = -1;
-	print(ans);
+	read(n);
+	for (register int i = 1, x; i <= n; ++i)
+		read(x), reads(tmp), fw[i] = tmp[0], E[x].push_back(i);
+	for (register int i = 0; i <= n; ++i)
+		std::sort(E[i].begin(), E[i].end(), [=](int a, int b){ return fw[a] < fw[b]; });
+	read(k);
+	for (register int i = 1; i <= k; ++i) read(id[i]), sp[id[i]] = 1;
+	idx = -1, dfs(0);
+	for (register int i = 1; i <= n; ++i) cnt[i] += cnt[i - 1];
+	DP(0);
+	for (register int i = 1; i <= k; ++i) print(f[id[i]], " \n"[i == k]);
 }
 int main(){
+#ifdef AT_HOME
+	freopen("test.in", "r", stdin);
+	freopen("test.out", "w", stdout);
+#endif
 	int T = 1;
 	// read(T);
 	while (T--) solve();
