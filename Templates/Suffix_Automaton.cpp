@@ -171,7 +171,7 @@ struct SuffixAutomaton {
 	}
 
 	void buildTree() {
-		for (register int i = 1; i < cnt; ++i) {
+		for (int i = 1; i < cnt; ++i) {
 			E[link[i]].push_back(i);
 		}
 		getSize(0);
