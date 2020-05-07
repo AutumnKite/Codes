@@ -114,23 +114,53 @@ using namespace IO;
 const int N = 100005;
 
 int n;
-long long k;
+long long k, a[N], b[N];
 
-struct Node {
-	int v, id;
-
-	bool operator < (const Node &rhs) const {
-		return v < rhs.v;
+long long calc(long long A) {
+	long long res = 0;
+	for (int i = 1; i <= n; ++i) {
+		long long l = 0, r = a[i], ans = 0;
+		while (l <= r) {
+			long long md = (l + r) >> 1;
+			if (-3ll * md * (md - 1) + a[i] - 1 >= A) {
+				ans = md;
+				l = md + 1;
+			} else {
+				r = md - 1;
+			}
+		}
+		res += b[i] = ans;
 	}
-} a[N];
+	return res;
+}
 
 int main() {
 	read(n), read(k);
 	for (int i = 1; i <= n; ++i) {
-		read(a[i].v), a[i].id = i;
+		read(a[i]);
 	}
-	std::sort(a + 1, a + 1 + n);
+	long long l = -4000000000000000000ll, r = 2000000000ll, ans = 0;
+	while (l <= r) {
+		long long md = (l + r) >> 1;
+		if (calc(md) >= k) {
+			ans = md;
+			l = md + 1;
+		} else {
+			r = md - 1;
+		}
+	}
+	long long now = calc(ans);
 	for (int i = 1; i <= n; ++i) {
-		
+		if (now == k) {
+			break;
+		}
+		if (b[i] > 0 && -3ll * b[i] * (b[i] - 1) + a[i] - 1 == ans) {
+			--b[i];
+			--now;
+		}
+	}
+	for (int i = 1; i <= n; ++i) {
+		print(b[i], " \n"[i == n]);
 	}
 }
+
