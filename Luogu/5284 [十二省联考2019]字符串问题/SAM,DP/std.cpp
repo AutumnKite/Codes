@@ -113,7 +113,8 @@ using namespace IO;
 
 const int N = 200005;
 
-int n, na, nb;
+int n, na, nb, m;
+int pa[N], pb[N];
 char s[N];
 
 struct SuffixAutomaton {
@@ -121,6 +122,7 @@ struct SuffixAutomaton {
 
 	int cnt, cur;
 	int trans[N][C], link[N], len[N];
+	int id[N];
 
 	int newNode(int Len) {
 		int u = cnt++;
@@ -130,12 +132,13 @@ struct SuffixAutomaton {
 	}
 
 	void init() {
-		cnt = 0, cur = newNode(0);
+		cnt = 0, cur = newNode(0), id[0] = cur;
 	}
 
 	void insert(int c) {
 		int p = cur;
 		cur = newNode(len[p] + 1);
+		id[len[cur]] = cur;
 		while (p != -1 && trans[p][c] == -1) {
 			trans[p][c] = cur;
 			p = link[p];
@@ -158,17 +161,167 @@ struct SuffixAutomaton {
 		}
 		link[q] = link[cur] = t;
 	}
+
+	static const int LG = 19;
+
+	std::vector<int> E[N];
+	int fa[N][LG];
+
+	void dfs(int u) {
+		fa[u][0] = link[u];
+		for (int i = 1; i < LG; ++i) {
+			if (fa[u][i - 1] == -1) {
+				fa[u][i] = -1;
+			} else {
+				fa[u][i] = fa[fa[u][i - 1]][i - 1];
+			}
+		}
+		for (int v : E[u]) {
+			dfs(v);
+		}
+	}
+
+	void buildTree() {
+		for (int i = 0; i < cnt; ++i) {
+			E[i].clear();
+		}
+		for (int i = 1; i < cnt; ++i) {
+			E[link[i]].push_back(i);
+		}
+		dfs(0);
+	}
+
+	int get(int l, int r) {
+		int u = id[r];
+		for (int i = LG - 1; ~i; --i) {
+			if (fa[u][i] != -1 && len[fa[u][i]] >= r - l) {
+				u = fa[u][i];
+			}
+		}
+		return u;
+	}
 } A;
+
+int get(int l, int r) {
+	l = n - l + 1, r = n - r;
+	std::swap(l, r);
+	return A.get(l, r);
+}
+
+struct Graph {
+	static const int N = 600005;
+
+	int n, w[N], d[N];
+	std::vector<int> E[N];
+	long long f[N];
+
+	void init(int _n) {
+		n = _n;
+		for (int i = 0; i < n; ++i) {
+			d[i] = 0, w[i] = 0;
+			E[i].clear();
+		}
+	}
+
+	void addEdge(int u, int v) {
+		E[u].push_back(v), ++d[v];
+		debug("%d %d\n", u, v);
+	}
+
+	long long toposort() {
+		std::vector<int> Q;
+		for (int i = 0; i < n; ++i) {
+			if (!d[i]) {
+				Q.push_back(i);
+			}
+			f[i] = w[i];
+		}
+		long long ans = 0;
+		for (int i = 0; i < (int)Q.size(); ++i) {
+			int u = Q[i];
+			ans = std::max(ans, f[u]);
+			for (int v : E[u]) {
+				f[v] = std::max(f[v], f[u] + w[v]);
+				--d[v];
+				if (!d[v]) {
+					Q.push_back(v);
+				}
+			}
+		}
+		return (int)Q.size() == n ? ans : -1;
+	}
+} G;
 
 void solve() {
 	n = readStr(s);
-
+	std::reverse(s, s + n);
+	A.init();
+	for (int i = 0; i < n; ++i) {
+		A.insert(s[i] - 'a');
+	}
+	A.buildTree();
+	debug("%d\n", A.cnt);
+	for (int i = 0; i < A.cnt; ++i) {
+		for (int j = 0; j < A.C; ++j) {
+			if (A.trans[i][j] != -1) {
+				debug("%d %d %c\n", i, A.trans[i][j], j + 'a');
+			}
+		}
+	}
+	read(na);
+	G.init(A.cnt + na);
+	for (int u = 0; u < A.cnt; ++u) {
+		for (int v : A.E[u]) {
+			G.addEdge(u, v);
+		}
+	}
+	for (int i = 0; i < na; ++i) {
+		int l, r;
+		read(l), read(r);
+		pa[i] = get(l, r);
+		G.w[A.cnt + i] = r - l + 1;
+		G.addEdge(pa[i], A.cnt + i);
+	}
+	read(nb);
+	for (int i = 0; i < nb; ++i) {
+		int l, r;
+		read(l), read(r);
+		pb[i] = get(l, r);
+	}
+	read(m);
+	for (int i = 0; i < m; ++i) {
+		int u, v;
+		read(u), read(v), --u, --v;
+		G.addEdge(A.cnt + u, pb[v]);
+	}
+	print(G.toposort());
 }
 
 int main() {
+	freopen("test.out", "w", stderr);
 	int T = 1;
 	read(T);
 	while (T--) {
 		solve();
 	}
 }
+
+/*
+1
+abbaabbaab
+4
+1 5
+4 7
+6 9
+8 10
+3
+1 6
+10 10
+4 6
+5
+1 2
+1 3
+2 1
+3 3
+4 1
+*/
