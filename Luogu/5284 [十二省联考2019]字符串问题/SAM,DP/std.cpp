@@ -113,8 +113,8 @@ using namespace IO;
 
 const int N = 200005;
 
-int n, na, nb, m;
-int pa[N], pb[N];
+int n, na, nb, m, pb[N], len[N];
+std::vector<std::pair<int, int>> pa[N << 1];
 char s[N];
 
 struct SuffixAutomaton {
@@ -209,7 +209,7 @@ int get(int l, int r) {
 }
 
 struct Graph {
-	static const int N = 600005;
+	static const int N = 1000005;
 
 	int n, w[N], d[N];
 	std::vector<int> E[N];
@@ -225,7 +225,6 @@ struct Graph {
 
 	void addEdge(int u, int v) {
 		E[u].push_back(v), ++d[v];
-		debug("%d %d\n", u, v);
 	}
 
 	long long toposort() {
@@ -250,6 +249,14 @@ struct Graph {
 		}
 		return (int)Q.size() == n ? ans : -1;
 	}
+	
+	// void print() {
+	// 	for (int i = 0; i < n; ++i) {
+	// 		for (int j : E[i]) {
+	// 			debug("%d %d\n", i, j);
+	// 		}
+	// 	}
+	// }
 } G;
 
 void solve() {
@@ -260,45 +267,66 @@ void solve() {
 		A.insert(s[i] - 'a');
 	}
 	A.buildTree();
-	debug("%d\n", A.cnt);
-	for (int i = 0; i < A.cnt; ++i) {
-		for (int j = 0; j < A.C; ++j) {
-			if (A.trans[i][j] != -1) {
-				debug("%d %d %c\n", i, A.trans[i][j], j + 'a');
-			}
-		}
-	}
+	// debug("%d\n", A.cnt);
+	// for (int i = 0; i < A.cnt; ++i) {
+	// 	for (int j = 0; j < A.C; ++j) {
+	// 		if (A.trans[i][j] != -1) {
+	// 			debug("%d %d %c\n", i, A.trans[i][j], j + 'a');
+	// 		}
+	// 	}
+	// }
 	read(na);
-	G.init(A.cnt + na);
-	for (int u = 0; u < A.cnt; ++u) {
-		for (int v : A.E[u]) {
-			G.addEdge(u, v);
-		}
+	for (int i = 0; i < A.cnt; ++i) {
+		pa[i].clear();
 	}
 	for (int i = 0; i < na; ++i) {
 		int l, r;
 		read(l), read(r);
-		pa[i] = get(l, r);
-		G.w[A.cnt + i] = r - l + 1;
-		G.addEdge(pa[i], A.cnt + i);
+		int w = r - l + 1;
+		pa[get(l, r)].push_back({w, i});
 	}
 	read(nb);
 	for (int i = 0; i < nb; ++i) {
 		int l, r;
 		read(l), read(r);
 		pb[i] = get(l, r);
+		len[i] = r - l + 1;
+	}
+	G.init(A.cnt + na + na + nb);
+	for (int u = 0; u < A.cnt; ++u) {
+		for (int v : A.E[u]) {
+			G.addEdge(u, v);
+		}
+	}
+	for (int i = 1; i < A.cnt; ++i) {
+		std::sort(pa[i].begin(), pa[i].end());
+		int lst = A.link[i];
+		for (auto v : pa[i]) {
+			int u = A.cnt + v.second;
+			G.addEdge(lst, u);
+			lst = u;
+			G.addEdge(u, u + na);
+			G.w[u + na] = v.first;
+		}
+	}
+	for (int i = 0; i < nb; ++i) {
+		int u = A.cnt + na + na + i, v = pb[i];
+		G.addEdge(u, v);
+		auto p = std::lower_bound(pa[v].begin(), pa[v].end(), std::make_pair(len[i], 0));
+		if (p != pa[v].end()) {
+			G.addEdge(u, A.cnt + p->second);
+		}
 	}
 	read(m);
 	for (int i = 0; i < m; ++i) {
 		int u, v;
 		read(u), read(v), --u, --v;
-		G.addEdge(A.cnt + u, pb[v]);
+		G.addEdge(A.cnt + na + u, A.cnt + na + na + v);
 	}
 	print(G.toposort());
 }
 
 int main() {
-	freopen("test.out", "w", stderr);
 	int T = 1;
 	read(T);
 	while (T--) {
