@@ -111,5 +111,54 @@ namespace IO {
 }
 using namespace IO;
 
-const int N = 105;
+const int N = 105, M = 50005;
+const int P = 998244353;
+
+int n, a[N], m, p[N];
+int f[M << 1], g[M << 1];
+
+int qpow(int a, int b) {
+	int s = 1;
+	for (; b; b >>= 1) {
+		if (b & 1) {
+			s = 1ll * s * a % P;
+		}
+		a = 1ll * a * a % P;
+	}
+	return s;
+}
+
+int main() {
+	read(n);
+	for (int i = 1; i <= n; ++i) {
+		read(a[i]);
+	}
+	for (int i = 1; i <= n; ++i) {
+		read(p[i]);
+		m += p[i];
+	}
+	int I2 = (P + 1) >> 1, _I2 = P - I2;
+	f[0] = g[0] = 1;
+	for (int i = 1; i <= n; ++i) {
+		for (int j = 2 * m; ~j; --j) {
+			if (a[i]) {
+				f[j] = 1ll * f[j] * _I2 % P;
+			} else {
+				f[j] = 1ll * f[j] * I2 % P;
+			}
+			g[j] = 1ll * g[j] * I2 % P;
+			if (j >= 2 * p[i]) {
+				f[j] = (f[j] + 1ll * f[j - 2 * p[i]] * I2) % P;
+				g[j] = (g[j] + 1ll * g[j - 2 * p[i]] * I2) % P;
+			}
+		}
+	}
+	int ans = 0;
+	for (int i = 0; i < 2 * m; ++i) {
+//		debug("%d %d\n", f[i], g[i]);
+		ans = (ans + 1ll * (P + g[i] - f[i]) * qpow(2 * m - i, P - 2)) % P;
+	}
+	ans = 1ll * ans * m % P * qpow(2, n) % P;
+	print(ans);
+}
 
