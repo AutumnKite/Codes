@@ -279,7 +279,7 @@ namespace Poly {
 			A.resize(m - 1);
 			return A;
 		}
-		std::reverse(A.begin(), A.end());
+		std::reverse(A.begin(), A.end()), A.resize(n - m + 1);
 		init(l), DFT(A, l);
 		for (int i = 0; i < l; ++i) {
 			A[i] = 1ll * A[i] * ib[i] % P;
@@ -297,7 +297,7 @@ namespace Poly {
 	}
 
 	poly Pow(poly a, int n, poly b) {
-		int m = b.size(), len = get(3 * m);
+		int m = b.size(), len = get(2 * m);
 		poly ib(b);
 		std::reverse(ib.begin(), ib.end());
 		ib = Inv(ib, m);

@@ -145,7 +145,7 @@ int qpow(int a, int b) {
 }
 
 namespace Poly {
-	const int MAX_LEN = 1 << 18;
+	const int MAX_LEN = 1 << 21;
 
 	typedef std::vector<int> poly;
 
@@ -193,6 +193,11 @@ namespace Poly {
 			F[rev[i]] = f[i];
 		}
 		for (int m = 1; m < n; m <<= 1) {
+			if (m >> 18 & 1) {
+				for (int i = 0; i < n; ++i) {
+					F[i] %= P;
+				}
+			}
 			for (int p = 0, l = m << 1; p < n; p += l) {
 				int *W = omega + m;
 				unsigned long long *F0 = F + p, *F1 = F0 + m;
@@ -234,35 +239,53 @@ namespace Poly {
 	}
 }
 
-const int N = 200005;
+const int N = 3000005;
 
-int n, m, inv[N];
+int n, m;
+int fac[N], inv[N];
+
+void init(int n) {
+	fac[0] = 1;
+	for (int i = 1; i <= n; ++i) {
+		fac[i] = 1ll * fac[i - 1] * i % P;
+	}
+	inv[n] = qpow(fac[n], P - 2);
+	for (int i = n; i; --i) {
+		inv[i - 1] = 1ll * inv[i] * i % P;
+	}
+}
+
+int C(int n, int m) {
+	if (m < 0 || m > n) {
+		return 0;
+	}
+	return 1ll * fac[n] * inv[m] % P * inv[n - m] % P;
+}
 
 int main() {
 	Poly::Init();
-	read(n), read(m), ++n;
-	inv[0] = 1;
-	for (int i = 1; i < n; ++i) {
-		inv[i] = 1ll * inv[i - 1] * Poly::inv[i] % P;
-	}
-	Poly::poly f(n), g(2 * n);
-	for (int i = 0; i < n; ++i) {
+	read(n), read(m);
+	Poly::poly f(m + 1), g(m + 1);
+	init(3 * m);
+	for (int i = 0; i <= m; ++i) {
 		read(f[i]);
-		f[i] = 1ll * f[i] * inv[i] % P * inv[n - i - 1] % P;
-		if ((n - i - 1) & 1) {
-			f[i] = (P - f[i]) % P;
+		g[i] = i & 1 ? P - 1 : 1;
+		f[i] = 1ll * f[i] * inv[i] % P;
+		g[i] = 1ll * g[i] * inv[i] % P;
+	}
+	f = Poly::Mul(f, g);
+	f.resize(m + 1);
+	for (int i = 0; i <= m; ++i) {
+		f[i] = 1ll * f[i] * fac[i] % P;
+		g[i] = 1ll * C(m + i, m) * C(m, i) % P;
+	}
+	f = Poly::Mul(f, g);
+	int now = 1, ans = 0;
+	for (int i = 0; i <= 3 * m && i <= n; ++i) {
+		if (i >= m) {
+			ans = (ans + 1ll * now * inv[i] % P * f[i - m]) % P;
 		}
+		now = 1ll * now * (n - i) % P;
 	}
-	for (int i = 0; i < 2 * n; ++i) {
-		g[i] = qpow(m - n + i, P - 2);
-	}
-	Poly::poly res(Poly::Mul(f, g, 2 * n));
-	int now = 1;
-	for (int i = 0; i < n; ++i) {
-		now = 1ll * now * (m - i) % P;
-	}
-	for (int i = 0; i < n; ++i) {
-		print(1ll * now * res[n + i] % P, ' ');
-		now = 1ll * now * (m + i + 1) % P * qpow(m + i + 1 - n, P - 2) % P;
-	}
+	print(ans);
 }

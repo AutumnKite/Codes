@@ -203,7 +203,7 @@ namespace Poly {
 			}
 		}
 		for (int i = 0; i < n; ++i) {
-			f[i] = (F[i] % P + P) % P;
+			f[i] = F[i] % P;
 		}
 	}
 
@@ -213,15 +213,6 @@ namespace Poly {
 		for (int i = 0; i < n; ++i) {
 			f[i] = mul(f[i], t);
 		}
-	}
-
-	poly Minus(poly a, poly b) {
-		int n = std::max(a.size(), b.size());
-		a.resize(n), b.resize(n);
-		for (int i = 0; i < n; ++i) {
-			dec(a[i], b[i]);
-		}
-		return a;
 	}
 
 	poly Mul(poly a, poly b, int _n = -1) {
@@ -241,97 +232,85 @@ namespace Poly {
 		a.resize(_n);
 		return a;
 	}
+}
 
-	poly Pow2(poly a) {
-		int _n = 2 * (int)a.size() - 1;
-		int n = get(_n);
-		init(n), DFT(a, n);
-		for (int i = 0; i < n; ++i) {
-			a[i] = mul(a[i], a[i]);
-		}
-		IDFT(a, n);
-		a.resize(_n);
-		return a;
+const int N = 100005;
+
+int n, a[N], fac[N], inv[N];
+
+void init(int n) {
+	fac[0] = 1;
+	for (int i = 1; i <= n; ++i) {
+		fac[i] = 1ll * fac[i - 1] * i % P;
 	}
-
-	poly Inv(poly f, int _n) {
-		int n = get(_n);
-		f.resize(n);
-		poly g(1);
-		g[0] = qpow(f[0], P - 2);
-		for (int m = 2; m <= n; m <<= 1) {
-			int l = m << 1;
-			poly tmp(f.begin(), f.begin() + m);
-			init(l), DFT(tmp, l), DFT(g, l);
-			for (int i = 0; i < l; ++i) {
-				g[i] = (2 + 1ll * (P - tmp[i]) * g[i]) % P * g[i] % P;
-			}
-			IDFT(g, l), g.resize(m);
-		}
-		g.resize(_n);
-		return g;
-	}
-
-	poly Mod(const poly &a, const poly &b, const poly &ib, int m, int l) {
-		int n = a.size();
-		poly A(a);
-		if (n < m) {
-			A.resize(m - 1);
-			return A;
-		}
-		std::reverse(A.begin(), A.end());
-		init(l), DFT(A, l);
-		for (int i = 0; i < l; ++i) {
-			A[i] = 1ll * A[i] * ib[i] % P;
-		}
-		IDFT(A, l);
-		A.resize(n - m + 1), std::reverse(A.begin(), A.end());
-		DFT(A, l);
-		for (int i = 0; i < l; ++i) {
-			A[i] = 1ll * A[i] * b[i] % P;
-		}
-		IDFT(A, l);
-		A = Minus(a, A);
-		A.resize(m - 1);
-		return A;
-	}
-
-	poly Pow(poly a, int n, poly b) {
-		int m = b.size(), len = get(3 * m);
-		poly ib(b);
-		std::reverse(ib.begin(), ib.end());
-		ib = Inv(ib, m);
-		init(len);
-		DFT(b, len);
-		DFT(ib, len);
-		poly s(1, 1);
-		for (; n; n >>= 1) {
-			if (n & 1) {
-				s = Mod(Mul(s, a), b, ib, m, len);
-			}
-			a = Mod(Pow2(a), b, ib, m, len);
-		}
-		return s;
+	inv[n] = qpow(fac[n], P - 2);
+	for (int i = n; i; --i) {
+		inv[i - 1] = 1ll * inv[i] * i % P;
 	}
 }
 
-int n, k;
+Poly::poly extend(Poly::poly f) {
+	int n = (int)f.size();
+	Poly::poly g(2 * n), res(f);
+	for (int i = 0; i < n; ++i) {
+		f[i] = 1ll * f[i] * inv[i] % P * inv[n - i - 1] % P;
+		if ((n - i - 1) & 1) {
+			f[i] = (P - f[i]) % P;
+		}
+	}
+	for (int i = 0; i < 2 * n; ++i) {
+		g[i] = qpow(i, P - 2);
+	}
+	f = Poly::Mul(f, g, 2 * n);
+	int now = 1;
+	for (int i = 0; i < n; ++i) {
+		now = 1ll * now * (n - i) % P;
+	}
+	for (int i = 0; i < n; ++i) {
+		res.push_back(1ll * now * f[n + i] % P);
+		now = 1ll * now * (n + i + 1) % P * qpow(i + 1, P - 2) % P;
+	}
+	return res;
+}
+
+Poly::poly solve(int l, int r) {
+	if (l == r) {
+		return {a[l], a[l] + 1};
+	}
+	int md = (l + r) >> 1;
+	Poly::poly A = solve(l, md), B = solve(md + 1, r);
+	A = extend(A), B = extend(B);
+	A.resize(r - l + 2), B.resize(r - l + 2);
+	for (int i = 0; i <= r - l + 1; ++i) {
+		A[i] = 1ll * A[i] * B[i] % P;
+	}
+	return A;
+}
 
 int main() {
 	Poly::Init();
-	read(n), read(k);
-	Poly::poly g(k + 1);
-	for (int i = 1; i <= k; ++i) {
-		read(g[k - i]);
-		g[k - i] = (P - g[k - i] % P) % P;
+	read(n);
+	init(n);
+	for (int i = 1; i <= n; ++i) {
+		read(a[i]);
+		a[i] = (2 * P - a[i] - i) % P;
+		// a[i] = 0;
 	}
-	g[k] = 1;
-	g = Poly::Pow({0, 1}, n, g);
+	Poly::poly f = solve(1, n), g(n + 1);
+	for (int i = 0; i <= n; ++i) {
+		f[i] = 1ll * f[i] * inv[i] % P;
+		g[i] = inv[i];
+		if (i & 1) {
+			g[i] = (P - g[i]) % P;
+		}
+	}
+	f = Poly::Mul(f, g);
 	int ans = 0;
-	for (int i = 0; i < k; ++i) {
-		int x;
-		read(x), x = (x % P + P) % P;
-		ans = (ans + 1ll * x * g[i]) % P;
+	for (int i = 0; i < n; ++i) {
+		if ((n - i) & 1) {
+			f[i] = (P - f[i]) % P;
+		}
+		ans = (ans + f[i]) % P;
 	}
 	print(ans);
 }
