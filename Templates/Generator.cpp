@@ -69,12 +69,10 @@ namespace generator{
 	}
 
 	template<typename T>
-	void myShuffle(T first, T last){
-		if (first != last){
-			for (T i = first + 1; i < last; ++i){
-				T j = first + rnd() % (i - first + 1);
-				if (i != j) std::swap(*i, *j);
-			}
+	void myShuffle(T first, T last) {
+		for (T i = first; i < last; ++i) {
+			T j = first + rnd() % (i - first + 1);
+			if (i != j) std::swap(*i, *j);
 		}
 	}
 }

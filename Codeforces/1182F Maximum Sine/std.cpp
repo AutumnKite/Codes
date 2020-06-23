@@ -113,21 +113,52 @@ using namespace IO;
 
 int l, r, a, P;
 int B;
-std::pair<int, int> p[35005];
+std::pair<int, int> b[50005];
+int mn, ans;
+
+void upd(int x) {
+	int w = 1ll * a * x % P;
+	if (w < P / 2) {
+		w = P / 2 - w;
+	} else {
+		w = w - P / 2;
+	}
+	if (w < mn) {
+		mn = w, ans = x;
+	} else if (w == mn && x < ans) {
+		ans = x;
+	}
+}
 
 void solve() {
 	read(l), read(r), read(a), read(P);
-	P *= 2, a = 2 * a % P;
-	B = std::sqrt(P);
+	P *= 2, a = 2ll * a % P;
+	r = std::min(0ll + r, 0ll + l + P - 1);
+	B = std::sqrt(P) + 0.5;
 	for (int i = 1; i <= B; ++i) {
-		p[i].first = (P / 2 + 1ll * a * i) % P;
-		p[i].second = i;
+		b[i].first = (P / 2 + 1ll * a * i) % P;
+		b[i].second = i;
 	}
-	std::sort(p + 1, p + 1 + B);
-	for (int i = 1; i <= P / B + 1; ++i) {
-		int w = 1ll * a * B % P * i % P;
-		
+	std::sort(b + 1, b + 1 + B);
+	mn = P, ans = 0;
+	for (int i = 1; i <= (r - l) / B; ++i) {
+		int w = 1ll * (i * B + l) * a % P;
+		int nx = std::lower_bound(b + 1, b + B + 1, std::make_pair(w, 0)) - b;
+		int pr = nx - 1;
+		if (nx > B) {
+			nx = 1;
+		}
+		if (pr < 1) {
+			pr = B;
+		}
+		upd(i * B + l - b[nx].second);
+		upd(i * B + l - b[pr].second);
 	}
+	int tmp = (r - l) / B + 1;
+	for (int i = tmp * B - r + l; i <= B; ++i) {
+		upd(tmp * B + l - i);
+	}
+	print(ans);
 }
 
 int main() {
@@ -137,3 +168,9 @@ int main() {
 		solve();
 	}
 }
+/*
+1
+356325 912953 399965 269
+
+356379
+*/
