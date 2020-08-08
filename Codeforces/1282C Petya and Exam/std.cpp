@@ -75,17 +75,17 @@ namespace IO {
 			putchar('0');
 			return;
 		}
-		static int num[40];
+		std::vector<int> num;
 		if (x < 0) {
 			putchar('-');
 			x = -x;
 		}
-		for (*num = 0; x; x /= 10) {
-			num[++*num] = x % 10;
+		for (; x; x /= 10) {
+			num.push_back(x % 10);
 		}
-		while (*num){
-			putchar(num[*num] ^ '0');
-			--*num;
+		while (!num.empty()) {
+			putchar(num.back() ^ '0');
+			num.pop_back();
 		}
 	}
 
@@ -111,52 +111,49 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
-}
+const int N = 200005;
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+int n, T, c[2];
+std::pair<int, int> a[N];
+int suf[N];
+
+void solve() {
+	read(n), read(T), read(c[0]), read(c[1]);
+	for (int i = 1; i <= n; ++i) {
+		read(a[i].second);
+	}
+	for (int i = 1; i <= n; ++i) {
+		read(a[i].first);
+	}
+	std::sort(a + 1, a + 1 + n);
+	a[n + 1].first = T + 1;
+	suf[n + 1] = 0;
+	for (int i = n; i; --i) {
+		suf[i] = suf[i + 1] + (a[i].second == 0);
+	}
+	long long sum = 0, ans = 0;
+	for (int i = 0; i <= n; ++i) {
+		if (i > 0) {
+			sum += c[a[i].second];
+		}
+		if (sum < a[i + 1].first) {
+			long long t = a[i + 1].first - sum - 1, s = 0;
+			if (t < 1ll * suf[i + 1] * c[0]) {
+				s = t / c[0];
+			} else {
+				s = suf[i + 1] + (t - 1ll * suf[i + 1] * c[0]) / c[1];
+			}
+			s = std::min<long long>(s, n - i);
+			ans = std::max(ans, i + s);
+		}
+	}
+	print(ans);
 }
 
 int main() {
-	int T;
+	int T = 1;
 	read(T);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		solve();
 	}
 }
-*/
-
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/

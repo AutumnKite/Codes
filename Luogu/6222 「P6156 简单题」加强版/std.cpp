@@ -3,6 +3,7 @@
 #include <cstring>
 #include <algorithm>
 #include <vector>
+#include <bitset>
 
 #define debug(...) fprintf(stderr, __VA_ARGS__)
 
@@ -75,17 +76,17 @@ namespace IO {
 			putchar('0');
 			return;
 		}
-		static int num[40];
+		std::vector<int> num;
 		if (x < 0) {
 			putchar('-');
 			x = -x;
 		}
-		for (*num = 0; x; x /= 10) {
-			num[++*num] = x % 10;
+		for (; x; x /= 10) {
+			num.push_back(x % 10);
 		}
-		while (*num){
-			putchar(num[*num] ^ '0');
-			--*num;
+		while (!num.empty()) {
+			putchar(num.back() ^ '0');
+			num.pop_back();
 		}
 	}
 
@@ -111,52 +112,77 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
+const int N = 20000005, PN = 2000005;
+
+int T, n, k;
+int cnt, prime[PN];
+unsigned f[N], id[N];
+std::bitset<N> vis;
+
+unsigned qpow(unsigned a, int b) {
+	unsigned s = 1;
+	for (; b; b >>= 1) {
+		if (b & 1) {
+			s *= a;
+		}
+		a *= a;
+	}
+	return s;
 }
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+void init(int n) {
+	id[1] = 1, f[1] = 1;
+	for (int i = 2; i <= n; ++i) {
+		if (!vis[i]) {
+			prime[++cnt] = i;
+			id[i] = qpow(i, k);
+			f[i] = i * id[i] - id[i];
+		}
+		for (int j = 1; j <= cnt && 1ll * i * prime[j] <= n; ++j) {
+			int t = i * prime[j];
+			vis[t] = 1;
+			id[t] = id[i] * id[prime[j]];
+			if (i % prime[j] == 0) {
+				if ((i / prime[j]) % prime[j] == 0) {
+					f[t] = 0;
+				} else {
+					f[t] = -f[i / prime[j]] * prime[j] * id[prime[j]] * id[prime[j]];
+				}
+				break;
+			}
+			f[t] = f[i] * f[prime[j]];
+		}
+	}
+	f[0] = id[0] = 0;
+	for (int i = 1; i <= n; ++i) {
+		f[i] += f[i - 1];
+		id[i] += id[i - 1];
+	}
+	for (int i = 1; i <= n; ++i) {
+		id[i] += id[i - 1];
+	}
+}
+
+unsigned calc(int n) {
+	return id[2 * n] - 2 * id[n];
+}
+
+unsigned solve(int n) {
+	unsigned ans = 0;
+	for (int i = 1, j; i <= n; i = j + 1) {
+		j = n / (n / i);
+		ans += (f[j] - f[i - 1]) * calc(n / i);
+	}
+	return ans;
 }
 
 int main() {
-	int T;
-	read(T);
+	read(T), read(n), read(k);
+	init(n << 1);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		int n;
+		read(n);
+		print(solve(n));
 	}
 }
-*/
 
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/

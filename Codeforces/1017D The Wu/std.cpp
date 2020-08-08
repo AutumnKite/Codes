@@ -75,17 +75,17 @@ namespace IO {
 			putchar('0');
 			return;
 		}
-		static int num[40];
+		std::vector<int> num;
 		if (x < 0) {
 			putchar('-');
 			x = -x;
 		}
-		for (*num = 0; x; x /= 10) {
-			num[++*num] = x % 10;
+		for (; x; x /= 10) {
+			num.push_back(x % 10);
 		}
-		while (*num){
-			putchar(num[*num] ^ '0');
-			--*num;
+		while (!num.empty()) {
+			putchar(num.back() ^ '0');
+			num.pop_back();
 		}
 	}
 
@@ -111,52 +111,57 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
-}
+int n, m, q, w[12];
+int a[1 << 12];
+int sum[1 << 12];
+int f[1 << 12][105];
+char tmp[15];
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+void solve() {
+	read(n), read(m), read(q);
+	for (int i = 0; i < n; ++i) {
+		read(w[i]);
+		sum[1 << i] = w[i];
+	}
+	for (int i = 0; i < m; ++i) {
+		readStr(tmp);
+		int x = 0;
+		for (int j = 0; j < n; ++j) {
+			x |= (tmp[j] ^ '0') << j;
+		}
+		++a[x];
+	}
+	sum[0] = 0;
+	for (int i = 1; i < (1 << n); ++i) {
+		sum[i] = sum[i & (i - 1)] + sum[i & -i];
+	}
+	for (int i = 0; i < (1 << n); ++i) {
+		for (int j = 0; j < (1 << n); ++j) {
+			int mask = (1 << n) - 1;
+			mask ^= i ^ j;
+			if (sum[mask] <= 100) {
+				f[i][sum[mask]] += a[j];
+			}
+		}
+		for (int j = 1; j <= 100; ++j) {
+			f[i][j] += f[i][j - 1];
+		}
+	}
+	while (q--) {
+		int x = 0, k;
+		readStr(tmp), read(k);
+		for (int j = 0; j < n; ++j) {
+			x |= (tmp[j] ^ '0') << j;
+		}
+		print(f[x][k]);
+	}
 }
 
 int main() {
-	int T;
-	read(T);
+	int T = 1;
+//	read(T);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		solve();
 	}
 }
-*/
 
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/

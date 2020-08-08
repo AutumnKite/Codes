@@ -75,17 +75,17 @@ namespace IO {
 			putchar('0');
 			return;
 		}
-		static int num[40];
+		std::vector<int> num;
 		if (x < 0) {
 			putchar('-');
 			x = -x;
 		}
-		for (*num = 0; x; x /= 10) {
-			num[++*num] = x % 10;
+		for (; x; x /= 10) {
+			num.push_back(x % 10);
 		}
-		while (*num){
-			putchar(num[*num] ^ '0');
-			--*num;
+		while (!num.empty()) {
+			putchar(num.back() ^ '0');
+			num.pop_back();
 		}
 	}
 
@@ -111,52 +111,32 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
-}
+int n, p, k;
+int a[200005], f[200005];
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+void solve() {
+	read(n), read(p), read(k);
+	for (int i = 1; i <= n; ++i) {
+		read(a[i]);
+	}
+	std::sort(a + 1, a + 1 + n);
+	int ans = 0;
+	for (int i = 1; i <= n; ++i) {
+		f[i] = f[i - 1] + a[i];
+		if (i >= k) {
+			f[i] = std::min(f[i], f[i - k] + a[i]);
+		}
+		if (f[i] <= p) {
+			ans = i;
+		}
+	}
+	print(ans);
 }
 
 int main() {
-	int T;
+	int T = 1;
 	read(T);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		solve();
 	}
 }
-*/
-
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/

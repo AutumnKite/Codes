@@ -75,17 +75,17 @@ namespace IO {
 			putchar('0');
 			return;
 		}
-		static int num[40];
+		std::vector<int> num;
 		if (x < 0) {
 			putchar('-');
 			x = -x;
 		}
-		for (*num = 0; x; x /= 10) {
-			num[++*num] = x % 10;
+		for (; x; x /= 10) {
+			num.push_back(x % 10);
 		}
-		while (*num){
-			putchar(num[*num] ^ '0');
-			--*num;
+		while (!num.empty()) {
+			putchar(num.back() ^ '0');
+			num.pop_back();
 		}
 	}
 
@@ -111,52 +111,21 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
-}
+int a, b, c, r;
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+void solve() {
+	read(a), read(b), read(c), read(r);
+	if (a > b) {
+		std::swap(a, b);
+	}
+	int L = std::max(c - r, a), R = std::min(c + r, b);
+	print((b - a) - std::max(R - L, 0)); 
 }
 
 int main() {
-	int T;
+	int T = 1;
 	read(T);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		solve();
 	}
 }
-*/
-
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/
