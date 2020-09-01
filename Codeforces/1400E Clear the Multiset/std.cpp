@@ -107,52 +107,36 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
+int n, a[5005], f[5005][5005];
+
+int dp(int l, int r, std::vector<int> p) {
+	if (l > r) {
+		return 0;
+	}
+	int d = p.size();
+	int m = std::min_element(a + l, a + r + 1) - a;
+	p.push_back(m);
+	int ls = dp(l, m - 1, p), rs = dp(m + 1, r, p);
+	for (int i = 0; i < d; ++i) {
+		f[m][i] = std::min(f[ls][i] + f[rs][i] + 1, f[ls][d] + f[rs][d] + a[m] - a[p[i]]);
+	}
+	return m;
 }
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+void solve() {
+	read(n);
+	for (int i = 1; i <= n; ++i) {
+		read(a[i]);
+	}
+	a[0] = 0;
+	int rt = dp(1, n, {0});
+	print(f[rt][0]);
 }
 
 int main() {
-	int T;
-	read(T);
+	int T = 1;
+	// read(T);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		solve();
 	}
 }
-*/
-
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/

@@ -107,52 +107,35 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
-}
+const int N = 1000005;
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+int n;
+long long r1, r2, r3, d, a[N], f[N];
+
+void solve() {
+	read(n), read(r1), read(r2), read(r3), read(d);
+	for (int i = 1; i <= n; ++i) {
+		read(a[i]);
+	}
+	f[0] = -d;
+	for (int i = 1; i <= n; ++i) {
+		f[i] = f[i - 1] + d + std::min(r1 * a[i] + r3, std::min(r2, r1 * a[i] + r1) + r1 + d * 2);
+		if (i > 1) {
+			f[i] = std::min(f[i], f[i - 2] + 4 * d + std::min(r2, r1 * a[i - 1] + r1) + r1 + std::min(r2, r1 * a[i] + r1) + r1);
+		}
+	}
+	long long sum = d + std::min(r1 * a[n] + r3, std::min(r2, r1 * a[n] + r1) + r1 + d * 2), ans = f[n];
+	for (int i = n - 1; ~i; --i) {
+		ans = std::min(ans, f[i] + sum);
+		sum += 2 * d + std::min(r2, r1 * a[i] + r1) + r1;
+	}
+	print(ans);
 }
 
 int main() {
-	int T;
-	read(T);
+	int T = 1;
+	// read(T);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		solve();
 	}
 }
-*/
-
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/

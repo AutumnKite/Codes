@@ -107,52 +107,93 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
+const int N = 300005, P = 998244353;
+
+int n, m, l[N], r[N];
+int cnt[N];
+int a[20], b[20];
+int sum[45][N];
+
+int qpow(int a, int b) {
+	int s = 1;
+	for (; b; b >>= 1) {
+		if (b & 1) {
+			s = 1ll * s * a % P;
+		}
+		a = 1ll * a * a % P;
+	}
+	return s;
 }
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+int fac[N], inv[N];
+
+void init(int n) {
+	fac[0] = 1;
+	for (int i = 1; i <= n; ++i) {
+		fac[i] = 1ll * fac[i - 1] * i % P;
+	}
+	inv[n] = qpow(fac[n], P - 2);
+	for (int i = n; i; --i) {
+		inv[i - 1] = 1ll * inv[i] * i % P;
+	}
+}
+
+int C(int n, int m) {
+	if (m < 0 || m > n) {
+		return 0;
+	}
+	return 1ll * fac[n] * inv[m] % P * inv[n - m] % P;
+}
+
+void solve() {
+	read(n), read(m);
+	for (int i = 1; i <= n; ++i) {
+		read(l[i]), read(r[i]);
+		++cnt[l[i]], --cnt[r[i] + 1];
+	}
+	for (int i = 1; i <= n; ++i) {
+		cnt[i] += cnt[i - 1];
+	}
+	init(n);
+	for (int t = 0; t <= 2 * m; ++t) {
+		for (int i = 1; i <= n; ++i) {
+			sum[t][i] = (sum[t][i - 1] + C(cnt[i] - t, i - t)) % P;
+		}
+	}
+	for (int i = 0; i < m; ++i) {
+		read(a[i]), read(b[i]);
+	}
+	int ans = 0;
+	for (int S = 0; S < (1 << m); ++S) {
+		static bool vis[N];
+		int L = 1, R = n, sz = 0, s = 1;
+		for (int i = 0; i < m; ++i) {
+			if (S >> i & 1) {
+				s *= -1;
+				L = std::max(L, l[a[i]]), R = std::min(R, r[a[i]]), sz += !vis[a[i]], vis[a[i]] = 1;
+				L = std::max(L, l[b[i]]), R = std::min(R, r[b[i]]), sz += !vis[b[i]], vis[b[i]] = 1;
+			}
+		}
+		if (L <= R) {
+			s *= sum[sz][R] - sum[sz][L - 1];
+		} else {
+			s = 0;
+		}
+		s = (s + P) % P;
+		ans = (ans + s) % P;
+		for (int i = 0; i < m; ++i) {
+			if (S >> i & 1) {
+				vis[a[i]] = vis[b[i]] = 0;
+			}
+		}
+	}
+	print(ans);
 }
 
 int main() {
-	int T;
-	read(T);
+	int T = 1;
+	// read(T);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		solve();
 	}
 }
-*/
-
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/

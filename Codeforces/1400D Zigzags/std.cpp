@@ -107,52 +107,51 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
-}
+int n, a[3005];
+std::vector<int> p[3005];
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+void solve() {
+	read(n);
+	for (int i = 1; i <= n; ++i) {
+		p[i].clear();
+	}
+	for (int i = 1; i <= n; ++i) {
+		read(a[i]);
+		p[a[i]].push_back(i);
+	}
+	long long ans = 0;
+	for (int i = 1; i <= n; ++i) {
+		int v = p[i].size();
+		ans += 1ll * v * (v - 1) * (v - 2) * (v - 3) / 24;
+		for (int j = 1; j <= n; ++j) {
+			if (i != j) {
+				std::vector<int> pos(p[i].size() + p[j].size());
+				std::merge(p[i].begin(), p[i].end(), p[j].begin(), p[j].end(), pos.begin());
+				std::vector<int> pre(pos.size()), suf(pos.size());
+				for (int k = 0; k < (int)pos.size(); ++k) {
+					pre[k] = (k > 0 ? pre[k - 1] : 0) + (a[pos[k]] == i);
+				}
+				for (int k = (int)pos.size() - 1; ~k; --k) {
+					suf[k] = (k < (int)pos.size() - 1 ? suf[k + 1] : 0) + (a[pos[k]] == j);
+				}
+				int sum = 0;
+				for (int k = 0; k < (int)pos.size(); ++k) {
+					if (a[pos[k]] == i) {
+						ans += 1ll * sum * suf[k];
+					} else {
+						sum += pre[k];
+					}
+				}
+			}
+		}
+	}
+	print(ans);
 }
 
 int main() {
-	int T;
+	int T = 1;
 	read(T);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		solve();
 	}
 }
-*/
-
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/

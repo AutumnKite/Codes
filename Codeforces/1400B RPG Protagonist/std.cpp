@@ -107,52 +107,31 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
-}
+int a, b;
+int cs, ct;
+int s, t;
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+void solve() {
+	read(a), read(b);
+	read(cs), read(ct);
+	read(s), read(t);
+	if (s > t) {
+		std::swap(s, t);
+		std::swap(cs, ct);
+	}
+	int ans = 0;
+	for (int i = 0; i <= cs && 1ll * i * s <= a; ++i) {
+		int j = std::min((a - i * s) / t, ct);
+		int c = std::min(cs - i, b / s);
+		ans = std::max(ans, i + j + c + std::min(ct - j, (b - c * s) / t));
+	}
+	print(ans);
 }
 
 int main() {
-	int T;
+	int T = 1;
 	read(T);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		solve();
 	}
 }
-*/
-
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/

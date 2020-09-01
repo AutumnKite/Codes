@@ -107,52 +107,45 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
-}
+int n, x;
+char s[100005], w[100005];
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+void solve() {
+	n = readStr(s + 1);
+	read(x);
+	for (int i = 1; i <= n; ++i) {
+		w[i] = '1';
+	}
+	for (int i = 1; i <= n; ++i) {
+		if (s[i] == '0') {
+			if (i > x) {
+				w[i - x] = '0';
+			}
+			if (i + x <= n) {
+				w[i + x] = '0';
+			}
+		}
+	}
+	for (int i = 1; i <= n; ++i) {
+		int v = 0;
+		if (i > x && w[i - x] == '1') {
+			v = 1;
+		}
+		if (i + x <= n && w[i + x] == '1') {
+			v = 1;
+		}
+		if (s[i] != v + '0') {
+			print(-1);
+			return;
+		}
+	}
+	printStr(w + 1, n);
 }
 
 int main() {
-	int T;
+	int T = 1;
 	read(T);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		solve();
 	}
 }
-*/
-
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/

@@ -107,52 +107,126 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
+const int N = 1005, INF = 0x3f3f3f3f;
+
+int n, x;
+char a[N];
+
+struct AC_Automaton {
+	static const int N = 100005;
+
+	int rt, cnt;
+	int in[N], go[N][10], fail[N];
+
+	void init() {
+		cnt = rt = 1;
+	}
+
+	void insert(int *a, int len) {
+		int u = rt;
+		for (int i = 1; i <= len; ++i) {
+			if (!go[u][a[i]]) {
+				go[u][a[i]] = ++cnt;
+			}
+			u = go[u][a[i]];
+		}
+		in[u] = 1;
+	}
+
+	void build() {
+		std::vector<int> Q;
+		for (int i = 0; i < 10; ++i) {
+			if (go[rt][i]) {
+				Q.push_back(go[rt][i]);
+				fail[go[rt][i]] = rt;
+			} else {
+				go[rt][i] = rt;
+			}
+		}
+		for (int k = 0; k < (int)Q.size(); ++k) {
+			int u = Q[k];
+			for (int i = 0; i < 10; ++i) {
+				if (go[u][i]) {
+					int v = go[u][i];
+					fail[v] = go[fail[u]][i];
+					Q.push_back(v);
+				} else {
+					go[u][i] = go[fail[u]][i];
+				}
+			}
+		}
+	}
+} A;
+
+int tmp[25];
+
+bool check(int n) {
+	for (int i = 1; i <= n; ++i) {
+		int s = 0;
+		for (int j = i; j <= n; ++j) {
+			s += tmp[j];
+			if (s != x && x % s == 0) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
+void dfs(int k, int s) {
+	if (s == x) {
+		if (check(k - 1)) {
+			A.insert(tmp, k - 1);
+		}
+		return;
+	}
+	for (int i = 1; i <= 9 && i <= x - s; ++i) {
+		tmp[k] = i;
+		dfs(k + 1, s + i);
+	}
+}
+
+int f[2][A.N];
+
+void upd(int &a, int b) {
+	a = std::min(a, b);
+}
+
+void solve() {
+	n = readStr(a + 1);
+	read(x);
+	A.init();
+	dfs(1, 0);
+	A.build();
+	int u = 0;
+	for (int i = 1; i <= A.cnt; ++i) {
+		f[u][i] = INF;
+	}
+	f[u][A.rt] = 0;
+	for (int i = 1; i <= n; ++i) {
+		int c = a[i] - '0';
+		for (int j = 1; j <= A.cnt; ++j) {
+			f[u ^ 1][j] = INF;
+		}
+		for (int j = 1; j <= A.cnt; ++j) {
+			if (!A.in[A.go[j][c]]) {
+				upd(f[u ^ 1][A.go[j][c]], f[u][j]);
+			}
+			upd(f[u ^ 1][j], f[u][j] + 1);
+		}
+		u ^= 1;
+	}
+	int ans = INF;
+	for (int i = 1; i <= A.cnt; ++i) {
+		upd(ans, f[u][i]);
+	}
+	print(ans);
 }
 
 int main() {
-	int T;
-	read(T);
+	int T = 1;
+	// read(T);
 	while (T--) {
-		solveString();
-	}
-	read(T);
-	while (T--) {
-		solveInt();
+		solve();
 	}
 }
-*/
-
-/*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
-*/

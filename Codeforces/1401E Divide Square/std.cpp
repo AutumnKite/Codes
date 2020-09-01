@@ -107,52 +107,87 @@ namespace IO {
 }
 using namespace IO;
 
-/*
-void solveString() {
-	int n;
-	static char s[1005];
-	n = readStr(s);
-	printStr(s + 1, std::min(50, n - 1));
-}
+const int N = 1000005;
 
-void solveInt() {
-	int a, b;
-	read(a), read(b), print(a + b);
-}
+int n, m;
+int a[N], b[N];
+std::vector<int> c[N], d[N];
+
+struct BIT {
+	int c[N];
+
+	void add(int x, int v) {
+		for (; x < N; x += x & -x) {
+			c[x] += v;
+		}
+	}
+
+	int query(int x) {
+		int s = 0;
+		for (; x; x ^= x & -x) {
+			s += c[x];
+		}
+		return s;
+	}
+} T;
 
 int main() {
-	int T;
-	read(T);
-	while (T--) {
-		solveString();
+	read(n), read(m);
+	for (int i = 1; i <= n; ++i) {
+		int x, l, r;
+		read(x), read(l), read(r);
+		if (l == 0) {
+			a[x] = r;
+		} else {
+			b[x] = l;
+		}
 	}
-	read(T);
-	while (T--) {
-		solveInt();
+	a[1000000] = 1000000;
+	for (int i = 1; i <= m; ++i) {
+		int x, l, r;
+		read(x), read(l), read(r);
+		if (l == 0) {
+			c[r].push_back(x);
+		} else {
+			d[l].push_back(x);
+		}
 	}
+	long long ans = 0;
+	for (int i = 0; i < N; ++i) {
+		if (a[i]) {
+			T.add(1, 1);
+			T.add(a[i] + 1, -1);
+		}
+		if (b[i]) {
+			T.add(b[i], 1);
+		}
+		for (int v : c[i]) {
+			ans += T.query(v);
+		}
+		if (a[i] == 1000000) {
+			++ans;
+		}
+	}
+	for (int i = 0; i < N; ++i) {
+		for (int v : d[i]) {
+			ans += std::max(0, T.query(v) - 1);
+		}
+		if (a[i]) {
+			T.add(1, -1);
+			T.add(a[i] + 1, 1);
+		}
+		if (b[i]) {
+			T.add(b[i], -1);
+		}
+	}
+	print(ans);
 }
-*/
-
 /*
-A test Data:
-
-Input:
-4
-abcded     	f
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bb
-4
-19260817 -19260817
-33445566 -92758436
--348935545 -358949545
-0 100
-
-Output:
-bcded
-
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-b
-0
--59312870
--707885090
-100
+3 3
+4 0 1
+2 0 5
+3 1 1000000
+2 3 1000000
+4 0 4
+3 0 1000000
 */
