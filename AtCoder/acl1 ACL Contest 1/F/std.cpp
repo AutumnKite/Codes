@@ -178,10 +178,10 @@ int solve(int l, int r) {
 		if (type[i] == 0) {
 			for (int j = 0; j < (int)line.size(); ++j) {
 				if ((pa[i][2] < line[j].first) ^ (pb[i][1] < line[j].second)) {
-					flag0 = true;
+					flag1 = true;
 				}
 				if ((pa[i][0] < line[j].first) ^ (pb[i][1] < line[j].second)) {
-					flag1 = true;
+					flag0 = true;
 				}
 			}
 			for (int j = 0; j < i; ++j) {
