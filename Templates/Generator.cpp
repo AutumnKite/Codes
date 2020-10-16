@@ -1,32 +1,25 @@
-#include <cstdio>
-#include <cctype>
-#include <cstring>
-#include <ctime>
-#include <cassert>
-#include <algorithm>
-#include <vector>
-#include <set>
+#include <bits/stdc++.h>
 
 #define debug(...) fprintf(stderr, __VA_ARGS__)
 
-namespace generator{
+namespace IO {
 	template<typename T>
 	inline void print_(T x) {
 		if (x == 0) {
 			putchar('0');
 			return;
 		}
-		std::vector<int> num;
+		static int num[40];
 		if (x < 0) {
 			putchar('-');
 			x = -x;
 		}
-		for (; x; x /= 10) {
-			num.push_back(x % 10);
+		for (*num = 0; x; x /= 10) {
+			num[++*num] = x % 10;
 		}
-		while (!num.empty()) {
-			putchar(num.back() ^ '0');
-			num.pop_back();
+		while (*num){
+			putchar(num[*num] ^ '0');
+			--*num;
 		}
 	}
 
@@ -49,45 +42,35 @@ namespace generator{
 		printStr_(s, n);
 		putchar(ch);
 	}
-	
-	unsigned long long seed = 0x3C9FC1DA24BB75DFull;
-
-	inline void srnd(unsigned long long _sd) {
-		seed ^ _sd ? seed ^= _sd : 0;
-	}
-
-	inline unsigned long long rnd() {
-		seed ^= seed << 13;
-		seed ^= seed >> 7;
-		seed ^= seed << 17;
-		return seed + 0x764FF49E4F6C521Dull;
-	}
-
-	template<typename T>
-	T rnd(T a, T b) {
-		return rnd() % (unsigned long long)(b - a + 1) + a;
-	}
-
-	template<typename T>
-	void myShuffle(T first, T last) {
-		for (T i = first; i < last; ++i) {
-			T j = first + rnd() % (i - first + 1);
-			if (i != j) std::swap(*i, *j);
-		}
-	}
 }
-using namespace generator;
+using namespace IO;
 
-char name[105], input[105], run[305];
+std::mt19937_64 generator(time(0));
+
+inline unsigned long long rnd() {
+	return generator();
+}
+
+template<typename T>
+inline T rnd(T a, T b) {
+	return rnd() % (b - a + 1) + a;
+}
+
+char name[105], input[105], output[105], run[305];
 
 void start(int id) {
 	sprintf(name, "data%d", id);
 	sprintf(input, "%s.in", name);
+	sprintf(output, "%s.ans", name);
 	freopen(input, "w", stdout);
 }
 
 void finish() {
 	fclose(stdout);
-	sprintf(run, "./std < %s > %s.ans", input, name);
+	sprintf(run, "std < %s > %s", input, output);
+	system(run);
+	sprintf(run, "wfr %s -r:\"\\r\\n\" -t:\"\\n\"", input);
+	system(run);
+	sprintf(run, "wfr %s -r:\"\\r\\n\" -t:\"\\n\"", output);
 	system(run);
 }

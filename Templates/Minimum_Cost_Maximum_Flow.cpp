@@ -1,42 +1,77 @@
-#include <cstdio>
-#include <algorithm>
-#include <cstring>
-#define N 5005
-#define M 100005
-#define INF 0x3f3f3f3f
-int n, m, S, T;
-int edge, pr[M], to[M], cap[M], cost[M], hd[N];
-void addedge(int u, int v, int w, int c){
-	to[edge] = v, cap[edge] = w, cost[edge] = c, pr[edge] = hd[u], hd[u] = edge++;
-	to[edge] = u, cap[edge] = 0, cost[edge] = -c, pr[edge] = hd[v], hd[v] = edge++;
-}
-int h, t, Q[M << 3], dis[N], vis[N], pre[N], mn[N];
-void spfa(){
-	memset(vis, 0, sizeof vis), memset(dis, 0x3f, sizeof dis);
-	h = 0, t = 1, Q[t] = S, dis[S] = 0, vis[S] = 1, pre[S] = 0, mn[S] = INF;
-	while (h < t){
-		int u = Q[++h]; vis[u] = 0;
-		for (register int i = hd[u], v; ~i; i = pr[i])
-			if (cap[i] && dis[u] + cost[i] < dis[v = to[i]]){
-				dis[v] = dis[u] + cost[i], mn[v] = std :: min(mn[u], cap[i]), pre[v] = i;
-				if (!vis[v]) Q[++t] = v, vis[v] = 1;
+#include <bits/stdc++.h>
+
+struct Network {
+	const int INFcap = 0x3f3f3f3f;
+	const long long INFcost = 0x3f3f3f3f3f3f3f3fll;
+
+	struct Edge {
+		int u, v;
+		int cap;
+		long long cost;
+	};
+
+	int n, S, T;
+	std::vector<Edge> edge;
+	std::vector<std::vector<int>> E;
+
+	std::vector<long long> dis;
+	std::vector<int> mn;
+	std::vector<int> pre;
+
+	Network() {}
+
+	Network(int _n) : n(_n) {
+		E.resize(n);
+		dis.resize(n);
+		mn.resize(n);
+		pre.resize(n);
+	}
+
+	void setST(int _S, int _T) {
+		S = _S, T = _T;
+	}
+
+	void addEdge(int u, int v, int cap, long long cost) {
+		E[u].push_back((int)edge.size()), edge.push_back({u, v, cap, cost});
+		E[v].push_back((int)edge.size()), edge.push_back({v, u, 0, -cost});
+	}
+
+	bool SPFA() {
+		std::fill(dis.begin(), dis.end(), INFcost);
+		std::fill(mn.begin(), mn.end(), 0);
+		std::fill(pre.begin(), pre.end(), -1);
+		std::vector<bool> vis(n, 0);
+		std::vector<int> Q;
+		dis[S] = 0, mn[S] = INFcap;
+		Q.push_back(S), vis[S] = 1;
+		for (int i = 0; i < (int)Q.size(); ++i) {
+			int u = Q[i];
+			vis[u] = 0;
+			for (int id : E[u]) {
+				int v = edge[id].v;
+				int cap = edge[id].cap;
+				long long cost = edge[id].cost;
+				if (cap && dis[v] > dis[u] + cost) {
+					dis[v] = dis[u] + cost;
+					mn[v] = std::min(mn[u], cap);
+					pre[v] = id;
+					if (!vis[v]) {
+						Q.push_back(v);
+						vis[v] = 1;
+					}
+				}
 			}
+		}
+		return dis[T] < INFcost;
 	}
-}
-std :: pair<int, int> MinCostMaxFlow(){
-	int Cost = 0, Flow = 0;
-	while (spfa(), dis[T] != INF){
-		Cost += dis[T] * mn[T], Flow += mn[T];
-		for (register int p = T; p != S; p = to[pre[p] ^ 1])
-			cap[pre[p]] -= mn[T], cap[pre[p] ^ 1] += mn[T];
+
+	void slope(int &flow, long long &cost) {
+		flow = 0, cost = 0;
+		while (SPFA()) {
+			for (int u = T; u != S; u = edge[pre[u]].u) {
+				edge[pre[u]].cap -= mn[T], edge[pre[u] ^ 1].cap += mn[T];
+			}
+			flow += mn[T], cost += dis[T] * mn[T];
+		}
 	}
-	return std :: make_pair(Flow, Cost);
-}
-int main(){
-	scanf("%d%d%d%d", &n, &m, &S, &T);
-	memset(hd, -1, sizeof hd);
-	for (register int i = 1, u, v, w, c; i <= m; ++i)
-		scanf("%d%d%d%d", &u, &v, &w, &c), addedge(u, v, w, c);
-	std :: pair<int, int> ans = MinCostMaxFlow();
-	printf("%d %d\n", ans.first, ans.second);
-}
+};
