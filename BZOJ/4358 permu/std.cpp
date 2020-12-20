@@ -17,15 +17,35 @@ struct Query {
 	}
 } Q[N];
 
-int now;
+struct List {
+	int ans;
+	int L[N], R[N];
+	int top, sta[N];
 
-void del(int x) {
-	
-}
+	void init(int n) {
+		for (int i = 0; i <= n; ++i) {
+			R[i] = i + 1;
+			L[i + 1] = i;
+		}
+		ans = 0;
+		top = 0;
+	}
 
-void add(int x) {
-	
-}
+	void erase(int x) {
+		ans = std::max(ans, R[x] - L[x] - 1);
+		L[R[x]] = L[x];
+		R[L[x]] = R[x];
+		sta[++top] = x;
+	}
+
+	void undo() {
+		int x = sta[top--];
+		L[R[x]] = x;
+		R[L[x]] = x;
+	}
+} T, _T;
+
+int ans[N];
 
 int main() {
 	std::ios_base::sync_with_stdio(false);
@@ -34,12 +54,6 @@ int main() {
 	std::cin >> n >> q;
 	for (int i = 1; i <= n; ++i) {
 		std::cin >> a[i];
-		v[++m] = a[i];
-	}
-	std::sort(v + 1, v + 1 + n);
-	m = std::unique(v + 1, v + 1 + m) - v - 1;
-	for (int i = 1; i <= n; ++i) {
-		a[i] = std::lower_bound(v + 1, v + 1 + m, a[i]) - v;
 	}
 
 	tot = (n - 1) / B + 1;
@@ -58,42 +72,41 @@ int main() {
 	}
 	std::sort(Q + 1, Q + 1 + q);
 
+	T.init(n), _T.init(n);
 	int l = 1, r = 0, lst = 0;
 	for (int i = 1; i <= q; ++i) {
 		if (bel[Q[i].l] == bel[Q[i].r]) {
 			for (int j = Q[i].l; j <= Q[i].r; ++j) {
-				++_cnt[a[j]];
+				_T.erase(a[j]);
 			}
-			for (int j = Q[i].l; j <= Q[i].r; ++j) {
-				ans[Q[i].id] = std::max(ans[Q[i].id], 1ll * _cnt[a[j]] * v[a[j]]);
+			ans[Q[i].id] = _T.ans;
+			while (_T.top) {
+				_T.undo();
 			}
-			for (int j = Q[i].l; j <= Q[i].r; ++j) {
-				--_cnt[a[j]];
-			}
+			_T.ans = 0;
 			continue;
 		}
 		if (bel[Q[i].l] != lst) {
 			lst = bel[Q[i].l];
-			while (r > R[lst]) {
-				del(a[r--]);
+			r = R[lst], l = r + 1;
+			while (T.top) {
+				T.undo();
 			}
-			while (l < R[lst] + 1) {
-				del(a[l++]);
-			}
-			now = 0;
+			T.ans = 0;
 		}
 		while (r < Q[i].r) {
-			add(a[++r]);
+			T.erase(a[++r]);
 		}
-		long long tmp = now;
+		int tmp = T.ans;
 		while (l > Q[i].l) {
-			add(a[--l]);
+			T.erase(a[--l]);
 		}
-		ans[Q[i].id] = now;
+		ans[Q[i].id] = T.ans;
 		while (l < R[lst] + 1) {
-			del(a[l++]);
+			T.undo();
+			++l;
 		}
-		now = tmp;
+		T.ans = tmp;
 	}
 	for (int i = 1; i <= q; ++i) {
 		std::cout << ans[i] << "\n";
