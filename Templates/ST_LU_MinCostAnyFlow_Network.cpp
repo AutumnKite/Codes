@@ -93,8 +93,69 @@ public:
 			cost += tmp * dis[T];
 		}
 	}
-	
+
 	Flow edge_flow(int id) {
 		return edge[id << 1 | 1].flow;
+	}
+};
+
+template <class Flow, class Cost>
+class ST_LU_MCAF_Network {
+	const Flow INF_flow = std::numeric_limits<Flow>::max();
+	const Cost INF_cost = std::numeric_limits<Cost>::max();
+
+	struct Edge {
+		int u, v;
+		Flow lower, upper;
+		Cost cost;
+	};
+
+	int n, S, T;
+	std::vector<Edge> edge;
+	MCMF_Network<Flow, Cost> G;
+
+public:
+	ST_LU_MCAF_Network(int _n) : n(_n), G(_n + 2) {}
+
+	void add_edge(int u, int v, Flow lower, Flow upper, Cost cost) {
+		edge.push_back({u, v, lower, upper, cost});
+	}
+
+	bool slope(int _S, int _T, Flow &flow, Cost &cost) {
+		S = _S, T = _T;
+		std::vector<int> d(n);
+		Cost tmp = 0;
+		for (auto e : edge) {
+			if (e.upper < e.lower) {
+				return false;
+			}
+			d[e.u] -= e.lower;
+			d[e.v] += e.lower;
+			G.add_edge(e.u, e.v, e.upper - e.lower, e.cost);
+			tmp += e.cost * e.lower;
+		}
+		G.add_edge(T, S, INF_flow, 0);
+		Flow full = 0;
+		for (int i = 0; i < n; ++i) {
+			if (d[i] > 0) {
+				G.add_edge(n, i, d[i], 0);
+				full += d[i];
+			} else if (d[i] < 0) {
+				G.add_edge(i, n + 1, -d[i], 0);
+			}
+		}
+		Flow __flow;
+		Cost __cost;
+		G.slope(n, n + 1, __flow, __cost);
+		if (__flow < full) {
+			return false;
+		}
+		flow = G.edge_flow(edge.size());
+		cost = tmp + __cost;
+		return true;
+	}
+
+	int edge_flow(int id) {
+		return edge[id].lower + G.edge_flow(id);
 	}
 };

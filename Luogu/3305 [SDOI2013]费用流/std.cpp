@@ -76,16 +76,67 @@ public:
 		E[v].push_back(edge.size()), edge.push_back({v, u, 0});
 	}
 
-	void slope(int _S, int _T, Flow &flow) {
+	Flow slope(int _S, int _T) {
 		S = _S, T = _T;
-		flow = 0;
+		Flow ans = 0;
 		while (bfs()) {
 			std::fill(iter.begin(), iter.end(), 0);
-			flow += dfs(S, INF);
+			ans += dfs(S, INF);
 		}
+		return ans;
 	}
 
 	Flow edge_flow(int id) {
 		return edge[id << 1 | 1].c;
 	}
 };
+
+const int N = 105, M = 1005;
+
+int n, m, c, mx;
+
+struct Edge {
+	int u, v, w;
+} E[M];
+
+int max_flow;
+
+bool check(double mid) {
+	MaxFlow_Network<double> G(n);
+	for (int i = 0; i < m; ++i) {
+		G.add_edge(E[i].u, E[i].v, std::min<double>(E[i].w, mid));
+	}
+	return G.slope(0, n - 1) >= max_flow;
+}
+
+int main() {
+	std::ios_base::sync_with_stdio(false);
+	std::cin.tie(0);
+
+	std::cout.setf(std::ios::fixed);
+	std::cout.precision(4);
+
+	std::cin >> n >> m >> c;
+	MaxFlow_Network<int> G(n);
+	for (int i = 0; i < m; ++i) {
+		std::cin >> E[i].u >> E[i].v >> E[i].w;
+		--E[i].u, --E[i].v;
+		mx = std::max(mx, E[i].w);
+		G.add_edge(E[i].u, E[i].v, E[i].w);
+	}
+	max_flow = G.slope(0, n - 1);
+
+	double l = 0, r = mx, ans = 0;
+	for (int i = 0; i < 60; ++i) {
+		double mid = (l + r) / 2;
+		if (check(mid)) {
+			ans = mid;
+			r = mid;
+		} else {
+			l = mid;
+		}
+	}
+
+	std::cout << max_flow << "\n";
+	std::cout << ans * c << "\n";
+}
