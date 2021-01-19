@@ -108,7 +108,7 @@ namespace po {
 	void IDFT(poly &f, int n) {
 		DFT(f, n);
 		std::reverse(f.begin() + 1, f.end());
-		int t = 1ll * (P - P / n) * inv[P % n] % P;
+		int t = n < MAX_LEN ? inv[n] : 1ll * (P - P / n) * inv[P % n] % P;
 		for (int i = 0; i < n; ++i) {
 			f[i] = 1ll * f[i] * t % P;
 		}
@@ -167,24 +167,6 @@ namespace po {
 		}
 		g.resize(_n);
 		return g;
-	}
-
-	std::pair<poly, poly> Div(const poly &a, const poly &b) {
-		int n = a.size(), m = b.size();
-		if (n < m) {
-			poly R(a);
-			R.resize(m - 1);
-			return std::make_pair(poly(), R);
-		}
-		poly A(a), B(b);
-		std::reverse(A.begin(), A.end());
-		std::reverse(B.begin(), B.end());
-		poly Q(Mul(A, Inv(B, n - m + 1)));
-		Q.resize(n - m + 1);
-		std::reverse(Q.begin(), Q.end());
-		poly R(Minus(a, Mul(b, Q)));
-		R.resize(m - 1);
-		return std::make_pair(Q, R);
 	}
 
 	poly Der(poly f) {
@@ -307,75 +289,6 @@ namespace po {
 		}
 		return a;
 	}
-
-	struct __tree_node {
-		int ls, rs;
-		poly f;
-	};
-
-	int __tree_cnt, __tree_rt;
-	__tree_node __nd[MAX_LEN << 1];
-
-	void __build_tree(const poly &x, int &u, int l, int r) {
-		u = __tree_cnt++;
-		__nd[u].ls = __nd[u].rs = -1;
-		if (l + 1 == r) {
-			__nd[u].f.resize(2);
-			__nd[u].f[1] = minus(0, x[l]);
-			__nd[u].f[0] = 1;
-			return;
-		}
-		int mid = (l + r + 1) >> 1;
-		__build_tree(x, __nd[u].ls, l, mid);
-		__build_tree(x, __nd[u].rs, mid, r);
-		int len = enlarge_to_pow2(r - l + 1);
-		init_rev(len);
-		DFT(__nd[__nd[u].ls].f, len);
-		DFT(__nd[__nd[u].rs].f, len);
-		__nd[u].f.resize(len);
-		for (int i = 0; i < len; ++i) {
-			__nd[u].f[i] = 1ll * __nd[__nd[u].ls].f[i] * __nd[__nd[u].rs].f[i] % P;
-		}
-		IDFT(__nd[u].f, len);
-	}
-
-	poly __MulT(poly a, const poly &b, int n) {
-		int len = a.size();
-		for (int i = 0; i < len; ++i) {
-			a[i] = 1ll * a[i] * b[i] % P;
-		}
-		init_rev(len);
-		DFT(a, len);
-		a.resize(n);
-		return a;
-	}
-
-	void __Evaluate_solve(poly &g, poly f, int u, int l, int r) {
-		if (l + 1 == r) {
-			g[l] = f[0];
-			return;
-		}
-		int mid = (l + r + 1) >> 1;
-		int len = enlarge_to_pow2(r - l + 1);
-		init_rev(len);
-		IDFT(f, len);
-		__Evaluate_solve(g, __MulT(f, __nd[__nd[u].rs].f, mid - l), __nd[u].ls, l, mid);
-		__Evaluate_solve(g, __MulT(f, __nd[__nd[u].ls].f, r - mid), __nd[u].rs, mid, r);
-	}
-
-	poly Evaluate(poly f, poly x) {
-		int n = f.size(), m = x.size();
-		__tree_cnt = 0;
-		__build_tree(x, __tree_rt, 0, m);
-		__nd[__tree_rt].f = Inv(__nd[__tree_rt].f, n);
-		int len = enlarge_to_pow2(n + m);
-		init_rev(len);
-		DFT(__nd[__tree_rt].f, len);
-		IDFT(f, len);
-		poly g(m);
-		__Evaluate_solve(g, __MulT(f, __nd[__tree_rt].f, m), __tree_rt, 0, m);
-		return g;
-	}
 }
 
 int main() {
@@ -384,18 +297,23 @@ int main() {
 
 	po::init_omega(), po::init_inv();
 
-	int n, m;
-	std::cin >> n >> m;
-	po::poly f(n + 1), x(m);
-	for (int i = 0; i <= n; ++i) {
-		std::cin >> f[i];
-	}
-	for (int i = 0; i < m; ++i) {
-		std::cin >> x[i];
-	}
-
-	auto res(po::Evaluate(f, x));
-	for (int v : res) {
-		std::cout << v << "\n";
+	for (int T = 1; T <= 5; ++T) {
+		int n;
+		std::cin >> n;
+		po::poly G(n + 1);
+		for (int i = 0; i <= n; ++i) {
+			G[i] = qpow(2, 1ll * i * (i - 1) / 2 % (P - 1));
+		}
+		po::poly D(po::Ln(G, n + 1));
+		for (int i = 0; i <= n; ++i) {
+			D[i] = 1ll * D[i] * i % P;
+		}
+		po::poly F(po::Exp(D, n + 1));
+		F = po::Mul(po::Der(D), po::Pow(po::Inv(F, n), n, n));
+		int ans = 1ll * F[n - 1] * po::inv[n] % P;
+		for (int i = 1; i < n; ++i) {
+			ans = 1ll * ans * i % P;
+		}
+		std::cout << ans << "\n";
 	}
 }
