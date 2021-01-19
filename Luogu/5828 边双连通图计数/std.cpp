@@ -301,8 +301,12 @@ int main() {
 		int n;
 		std::cin >> n;
 		po::poly G(n + 1);
+		int fac = 1;
 		for (int i = 0; i <= n; ++i) {
-			G[i] = qpow(2, 1ll * i * (i - 1) / 2 % (P - 1));
+			if (i) {
+				fac = 1ll * fac * i % P;
+			}
+			G[i] = 1ll * qpow(2, 1ll * i * (i - 1) / 2 % (P - 1)) * qpow(fac, P - 2) % P;
 		}
 		po::poly D(po::Ln(G, n + 1));
 		for (int i = 0; i <= n; ++i) {
