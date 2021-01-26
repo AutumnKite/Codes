@@ -58,131 +58,154 @@ int dist(int u, int v) {
 	return dis[u] + dis[v] - 2 * dis[LCA(u, v)];
 }
 
+int buf[50000000], *ps = buf;
+
+int *new_vector(int n) {
+	int *res = ps;
+	ps += n;
+	return res;
+}
+
 class VirtualTree {
-	const int INF = 0x3f3f3f3f;
-
-	std::vector<int> sta;
-
-	void add(int u) {
-		if (sta.empty()) {
-			sta.push_back(u);
-			return;
-		}
-		int x = sta.back(), y, lca = LCA(nodes[x], nodes[u]);
-		if (lca == nodes[x]) {
-			sta.push_back(u);
-			return;
-		}
-		while ((int)sta.size() > 1 && dfn[nodes[y = sta[(int)sta.size() - 2]]] > dfn[lca]) {
-			E[y].emplace_back(x, dis[nodes[x]] - dis[nodes[y]]);
-			x = y;
-			sta.pop_back();
-		}
-		sta.pop_back();
-		if (sta.empty() || lca != sta.back()) {
-			int id = nodes.size();
-			sta.push_back(id);
-			nodes.push_back(lca);
-			E.emplace_back();
-		}
-		E[sta.back()].emplace_back(x, dis[nodes[x]] - dis[nodes[sta.back()]]);
-		sta.push_back(u);
-	}
-
-	void dfs(int u) {
-		dfs_nodes.push_back(nodes[u]);
-		dfs_nodes_id.push_back(u);
-		for (auto p : E[u]) {
-			dfs(p.first);
-		}
-	}
-
-	void get_f(int u) {
-		f[u] = fc[u] = -INF;
-		for (auto p : E[u]) {
-			int v = p.first, w = p.second;
-			get_f(v);
-			if (f[v] + w > f[u]) {
-				f[u] = f[v] + w;
-			} else if (f[v] + w > fc[u]) {
-				fc[u] = f[v] + w;
-			}
-		}
-	}
-
-	void get_g(int u) {
-		for (auto p : E[u]) {
-			int v = p.first, w = p.second;
-			if (f[v] + w == f[u]) {
-				g[v] = std::max(g[u], fc[u]) + w;
-			} else {
-				g[v] = std::max(g[u], f[u]) + w;
-			}
-			get_g(v);
-		}
-	}
+	static const int INF = 0x3f3f3f3f;
 
 public:
-	std::vector<int> key_nodes;
-	std::vector<int> nodes;
-	std::vector<std::vector<std::pair<int, int>>> E;
-	int rt;
+	int n, m;
 
-	std::vector<int> f, fc, g;
-	std::vector<int> mx_dis;
+	int *nd, *fa, *f, *g, *id;
 
-	std::vector<int> dfs_nodes, dfs_nodes_id;
+	VirtualTree() {}
 
-	VirtualTree() : rt(-1) {}
+	VirtualTree(const std::vector<int> &a) {
+		n = m = a.size();
+		nd = new_vector(m);
+		for (int i = 0; i < m; ++i) {
+			nd[i] = a[i];
+		}
+		static int sta[N];
+		int top = 0;
+		static std::vector<std::pair<int, int>> E[N];
 
-	VirtualTree(const std::vector<int> &a) : key_nodes(a), nodes(a), E(a.size()) {
+		for (int i = 0; i < m; ++i) {
+			E[i].clear();
+		}
+
+		auto add = [&](int u) {
+			if (!top) {
+				sta[top++] = u;
+				return;
+			}
+			int x = sta[top - 1], y, lca = LCA(nd[x], nd[u]);
+			if (lca == nd[x]) {
+				sta[top++] = u;
+				return;
+			}
+			while (top > 1 && dfn[nd[y = sta[top - 2]]] > dfn[lca]) {
+				E[y].emplace_back(x, dis[nd[x]] - dis[nd[y]]);
+				x = y;
+				--top;
+			}
+			--top;
+			if (!top || lca != nd[sta[top - 1]]) {
+				int id = m;
+				sta[top++] = id;
+				*ps++ = lca, ++m;
+				E[id].clear();
+			}
+			E[sta[top - 1]].emplace_back(x, dis[nd[x]] - dis[nd[sta[top - 1]]]);
+			sta[top++] = u;
+		};
+
 		for (int i = 0; i < (int)a.size(); ++i) {
 			add(i);
 		}
-		while ((int)sta.size() > 1) {
-			int x = sta.back();
-			sta.pop_back();
-			int y = sta.back();
-			E[y].emplace_back(x, dis[nodes[x]] - dis[nodes[y]]);
+		while (top > 1) {
+			int x = sta[--top];
+			int y = sta[top - 1];
+			E[y].emplace_back(x, dis[nd[x]] - dis[nd[y]]);
 		}
-		rt = sta[0];
+		int rt = sta[0];
 
+		std::function<void(int)> dfs = [&](int u) {
+			*(ps++) = u;
+			for (auto p : E[u]) {
+				fa[p.first] = u;
+				dfs(p.first);
+			}
+		};
+
+		fa = new_vector(m);
+		id = ps;
 		dfs(rt);
 
-		f.resize(nodes.size()), fc.resize(nodes.size()), g.resize(nodes.size());
-		get_f(rt);
-		g[rt] = 0, get_g(rt);
-
-		mx_dis.resize(nodes.size());
-		for (int i = 0; i < (int)nodes.size(); ++i) {
-			mx_dis[i] = std::max(f[i], g[i]);
+		f = new_vector(m);
+		g = new_vector(m);
+		int *fc = new_vector(m);
+		for (int i = m - 1; i >= 0; --i) {
+			int u = id[i];
+			f[u] = u < n ? 0 : -INF;
+			fc[u] = -INF;
+			for (auto p : E[u]) {
+				int v = p.first, w = p.second;
+				if (f[v] + w > f[u]) {
+					fc[u] = f[u];
+					f[u] = f[v] + w;
+				} else if (f[v] + w > fc[u]) {
+					fc[u] = f[v] + w;
+				}
+			}
 		}
+		int *fw = new_vector(m);
+		g[rt] = -INF;
+		for (int i = 0; i < m; ++i) {
+			int u = id[i];
+			for (auto p : E[u]) {
+				int v = p.first, w = p.second;
+				if (f[v] + w == f[u]) {
+					g[v] = std::max(g[u] + fw[u], fc[u]);
+				} else {
+					g[v] = std::max(g[u] + fw[u], f[u]);
+				}
+				fw[v] = w;
+			}
+		}
+		ps -= 2 * m;
 	}
 
 	void operator=(const VirtualTree &a) {
-		key_nodes = a.key_nodes, nodes = a.nodes, E = a.E, rt = a.rt;
-		f = a.f, fc = a.fc, g = a.g, mx_dis = a.mx_dis;
-		dfs_nodes = a.dfs_nodes, dfs_nodes_id = a.dfs_nodes_id;
+		n = a.n, m = a.m;
+		nd = a.nd, fa = a.fa, f = a.f, g = a.g, id = a.id;
 	}
 
 	int max_dist(int u) {
-		int p = std::lower_bound(dfs_nodes.begin(), dfs_nodes.end(), u, [&](int u, int v) {
-			return dfn[u] < dfn[v];
-		}) - dfs_nodes.begin();
-		int ans = -INF;
-		if (p < (int)dfs_nodes.size()) {
-			ans = std::max(ans, mx_dis[dfs_nodes_id[p]] + dist(dfs_nodes[p], u));
+		int p = std::lower_bound(id, id + m, u, [&](int x, int y) {
+			return dfn[nd[x]] < dfn[y];
+		}) - id;
+		int v = 0;
+		if (p < m) {
+			v = std::max(v, LCA(nd[id[p]], u), [&](int x, int y) {
+				return dep[x] < dep[y];
+			});
 		}
 		if (p > 0) {
-			ans = std::max(ans, mx_dis[dfs_nodes_id[p - 1]] + dist(dfs_nodes[p - 1], u));
+			v = std::max(v, LCA(nd[id[p - 1]], u), [&](int x, int y) {
+				return dep[x] < dep[y];
+			});
 		}
-		return ans;
+		int q = std::lower_bound(id, id + m, v, [&](int x, int y) {
+			return dfn[nd[x]] < dfn[y];
+		}) - id;
+		return dis[u] - dis[v]
+		  + std::max(f[id[q]] + dis[nd[id[q]]] - dis[v], 
+		  q ? g[id[q]] + dis[v] - dis[nd[fa[id[q]]]] : -INF);
 	}
 };
 
 VirtualTree merge(const VirtualTree &a, const VirtualTree &b) {
-	std::vector<int> av = a.key_nodes, bv = b.key_nodes;
-	std::vector<int> v(av.size() + bv.size());
+	std::vector<int> v(a.n + b.n);
+	std::merge(a.nd, a.nd + a.n, b.nd, b.nd + b.n, v.begin(), [&](int x, int y) {
+		return dfn[x] < dfn[y];
+	});
 	return VirtualTree(v);
 }
 
@@ -196,11 +219,12 @@ int enlarge_to_pow2(int n) {
 
 class SegmentTree {
 	int n, now;
-	std::vector<bool> ok;
-	std::vector<VirtualTree> c;
+	bool ok[N << 2];
+	VirtualTree c[N << 2];
 
 	void up(int u) {
 		c[u] = merge(c[u << 1], c[u << 1 | 1]);
+		ok[u] = true;
 	}
 
 	void __insert(int u, int l, int r, int x) {
@@ -248,7 +272,9 @@ class SegmentTree {
 	}
 
 public:
-	SegmentTree(int _n) : n(_n), now(0), ok(n << 1), c(n << 1) {}
+	void set(int _n) {
+		n = _n;
+	}
 
 	void insert(int a) {
 		++now;
@@ -263,7 +289,13 @@ public:
 	int query(int l, int r, int a) {
 		return __query(1, 0, n, l, r, a);
 	}
+
+	int len() {
+		return now;
+	}
 };
+
+SegmentTree T;
 
 int main() {
 	std::ios_base::sync_with_stdio(false);
@@ -279,8 +311,8 @@ int main() {
 	dfs(1);
 	initST();
 
-	SegmentTree T(enlarge_to_pow2(m));
-	int ans = 0, now = 0;
+	T.set(enlarge_to_pow2(m));
+	int ans = 0;
 	while (m--) {
 		int op;
 		std::cin >> op;
@@ -289,15 +321,13 @@ int main() {
 			std::cin >> x;
 			x = (x ^ abs(ans)) % n + 1;
 			T.insert(x);
-			++now;
 		} else if (op == 2) {
 			T.erase();
-			--now;
 		} else if (op == 3) {
 			int l, r, x;
 			std::cin >> l >> r >> x;
-			l = (l ^ abs(ans)) % now + 1;
-			r = (r ^ abs(ans)) % now + 1;
+			l = (l ^ abs(ans)) % T.len() + 1;
+			r = (r ^ abs(ans)) % T.len() + 1;
 			if (l > r) {
 				std::swap(l, r);
 			}
