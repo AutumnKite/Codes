@@ -1,57 +1,64 @@
 #include <bits/stdc++.h>
 
 const int N = 5000005, M = 2005;
-const int P = 1000000007, Inv2 = (P + 1) >> 1;
 
 int cnt, prime[N];
 bool vis[N];
-int phi[N];
+int mu[N];
 int sum[N];
 
 void init() {
 	vis[1] = true;
-	phi[1] = 1;
+	mu[1] = 1;
 	for (int i = 2; i < N; ++i) {
 		if (!vis[i]) {
 			prime[++cnt] = i;
-			phi[i] = i - 1;
+			mu[i] = -1;
 		}
 		for (int j = 1; j <= cnt && i * prime[j] < N; ++j) {
 			vis[i * prime[j]] = true;
 			if (i % prime[j] == 0) {
-				phi[i * prime[j]] = phi[i] * prime[j];
+				mu[i * prime[j]] = 0;
 				break;
 			} else {
-				phi[i * prime[j]] = phi[i] * (prime[j] - 1);
+				mu[i * prime[j]] = -mu[i];
 			}
 		}
 	}
 	for (int i = 1; i < N; ++i) {
-		sum[i] = (sum[i - 1] + phi[i]) % P;
+		sum[i] = sum[i - 1] + mu[i];
 	}
 }
 
 long long n;
 
 bool ok[M];
-int S[M];
+long long S[M];
 
-int calc(long long n) {
+long long calc(long long n) {
 	if (n < N) {
 		return sum[n];
 	}
 	if (ok[::n / n]) {
 		return S[::n / n];
 	}
-	int res = (n % P) * ((n + 1) % P) % P * Inv2 % P;
+	long long res = 1;
 	for (long long l = 2, r; l <= n; l = r + 1) {
 		long long t = n / l;
 		r = n / t;
-		res = (res + (r - l + 1) % P * (P - calc(t))) % P;
+		res -= (r - l + 1) * calc(t);
 	}
 	ok[::n / n] = true;
 	S[::n / n] = res;
 	return res;
+}
+
+long long solve(long long _n) {
+	n = _n;
+	for (int i = 1; i <= n / N; ++i) {
+		ok[i] = false;
+	}
+	return calc(n);
 }
 
 int main() {
@@ -60,16 +67,7 @@ int main() {
 
 	init();
 
-	std::cin >> n;
-
-	int ans = 0;
-	int lst = 0;
-	for (long long l = 1, r; l <= n; l = r + 1) {
-		long long t = n / l;
-		r = n / t;
-		int v = calc(r);
-		ans = (ans + (t % P) * (t % P) % P * (v + P - lst)) % P;
-		lst = v;
-	}
-	std::cout << ans << "\n";
+	long long a, b;
+	std::cin >> a >> b;
+	std::cout << solve(b) - solve(a - 1) << "\n";
 }

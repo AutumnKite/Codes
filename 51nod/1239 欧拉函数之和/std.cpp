@@ -61,15 +61,5 @@ int main() {
 	init();
 
 	std::cin >> n;
-
-	int ans = 0;
-	int lst = 0;
-	for (long long l = 1, r; l <= n; l = r + 1) {
-		long long t = n / l;
-		r = n / t;
-		int v = calc(r);
-		ans = (ans + (t % P) * (t % P) % P * (v + P - lst)) % P;
-		lst = v;
-	}
-	std::cout << ans << "\n";
+	std::cout << calc(n) << "\n";
 }
