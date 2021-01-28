@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 
-const int N = 5000005, M = 2005, P = 1000000007, Inv2 = (P + 1) / 2;
+const int N = 5000005, M = 2005;
+const int P = 1000000007, Inv2 = 500000004, Inv6 = 166666668;
 
 int cnt, prime[N];
 bool vis[N];
@@ -13,15 +14,15 @@ void init() {
 	for (int i = 2; i < N; ++i) {
 		if (!vis[i]) {
 			prime[++cnt] = i;
-			f[i] = 1 - i;
+			f[i] = (i - 1ll * i * i) % P;
 		}
 		for (int j = 1; j <= cnt && i * prime[j] < N; ++j) {
 			vis[i * prime[j]] = true;
 			if (i % prime[j] == 0) {
-				f[i * prime[j]] = f[i];
+				f[i * prime[j]] = 1ll * f[i] * prime[j] % P;
 				break;
 			} else {
-				f[i * prime[j]] = f[i] * f[prime[j]];
+				f[i * prime[j]] = 1ll * f[i] * f[prime[j]] % P;
 			}
 		}
 	}
@@ -35,6 +36,16 @@ long long all;
 bool ok[M];
 int S[M];
 
+int sum1(long long n) {
+	n %= P;
+	return 1ll * n * (n + 1) % P * Inv2 % P;
+}
+
+int sum2(long long n) {
+	n %= P;
+	return 1ll * n * (n + 1) % P * (2 * n + 1) % P * Inv6 % P;
+}
+
 int calc(long long n) {
 	if (n < N) {
 		return sum[n];
@@ -42,33 +53,33 @@ int calc(long long n) {
 	if (ok[all / n]) {
 		return S[all / n];
 	}
-	int res = n;
+	int res = sum1(n);
+	int lst = sum2(1);
 	for (long long l = 2, r; l <= n; l = r + 1) {
 		long long t = n / l;
 		r = n / t;
-		res = (res - 1ll * (l + r) * (r - l + 1) / 2 % P * calc(t)) % P;
+		int v = sum2(r);
+		res = (res - 1ll * (v - lst) * calc(t)) % P;
+		lst = v;
 	}
 	ok[all / n] = true;
 	S[all / n] = res;
 	return res;
 }
 
-int F(int n) {
-	return 1ll * n * (n + 1) % P * (n + 2) % P * Inv6 % P;
-}
-
-int solve(int n) {
+int solve(long long n) {
 	all = n;
 	for (int i = 1; i <= n / N; ++i) {
 		ok[i] = false;
 	}
 	int ans = 0;
 	int lst = 0;
-	for (int l = 1, r; l <= n; l = r + 1) {
-		int t = n / l;
+	for (long long l = 1, r; l <= n; l = r + 1) {
+		long long t = n / l;
 		r = n / t;
 		int v = calc(r);
-		ans = (ans + 1ll * (v - lst) * F(t)) % P;
+		int st = sum1(t);
+		ans = (ans + 1ll * (v - lst) * st % P * st) % P;
 		lst = v;
 	}
 	return (ans + P) % P;
@@ -80,7 +91,7 @@ int main() {
 
 	init();
 
-	int a, b;
-	std::cin >> a >> b;
-	std::cout << (solve(b) + P - solve(a - 1)) % P << "\n";
+	long long n;
+	std::cin >> n;
+	std::cout << solve(n) << "\n";
 }
