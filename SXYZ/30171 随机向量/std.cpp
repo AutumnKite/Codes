@@ -1,7 +1,5 @@
 #include <bits/stdc++.h>
 
-const long double pi = acosl(-1);
-
 int n;
 
 int main() {
@@ -16,7 +14,7 @@ int main() {
 	for (int i = 1; i <= n; ++i) {
 		long double R;
 		std::cin >> R;
-		ans += pi * R * R / 2;
+		ans += R * R / 2;
 	}
 
 	std::cout << ans << "\n";
