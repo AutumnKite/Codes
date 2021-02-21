@@ -189,13 +189,13 @@ public:
 			splay(u);
 			son[u][1] = v;
 			v = u, u = fa[u];
-			int l = u == -1 ? 0 : len[u], r = len[v];
+			int l = u == -1 ? -1 : len[u], r = len[v];
 			if (las[v] != -1) {
 				T.add(las[v] - r, las[v] - l, -1);
 			}
 			T.add(p - r, p - l, 1);
-			upd_las(v, p);
 		}
+		upd_las(v, p);
 	}
 };
 
@@ -234,7 +234,7 @@ int main() {
 	for (int i = 0; i < (int)s.size(); ++i) {
 		T.change(nd[i], i + 1, S);
 		for (auto p : Q[i]) {
-			ans[p.second] = S.query(0, p.first + 1);
+			ans[p.second] = S.query(p.first, i + 1);
 		}
 	}
 
