@@ -1,7 +1,6 @@
 #include <bits/stdc++.h>
 
 const int N = 100005;
-const long long INF = 1000000000000000001ll;
 
 int n, L, p;
 std::string s[N];
@@ -9,30 +8,22 @@ int a[N];
 
 int h, t;
 std::pair<int, int> q[N];
-long long f[N];
+long double f[N];
 int lst[N];
 
-long long mul(long long a, long long b) {
-	return b == 0 || a <= INF / b ? a * b : INF;
-}
-
-long long plus(long long a, long long b) {
-	return a <= INF - b ? a + b : INF;
-}
-
-long long qpow(long long a, int b) {
-	long long s = 1;
+long double qpow(long double a, int b) {
+	long double s = 1;
 	for (; b; b >>= 1) {
 		if (b & 1) {
-			s = mul(s, a);
+			s *= a;
 		}
-		a = mul(a, a);
+		a *= a;
 	}
 	return s;
 }
 
-long long trans(int j, int i) {
-	return plus(f[j], qpow(abs(a[i] - a[j] + i - j - 1 - L), p));
+long double trans(int j, int i) {
+	return f[j] + qpow(abs(a[i] - a[j] + i - j - 1 - L), p);
 }
 
 void arrange(int n) {
@@ -65,7 +56,7 @@ void solve() {
 		while (h < t && trans(i, q[t - 1].first + 1) < trans(q[t].second, q[t - 1].first + 1)) {
 			--t;
 		}
-		int l = std::max(i + 1, q[t - 1].first + 1), r = q[t].first;
+		int l = std::max(i, q[t - 1].first + 1), r = q[t].first;
 		while (l <= r) {
 			int mid = (l + r) >> 1;
 			if (trans(i, mid) < trans(q[t].second, mid)) {
@@ -79,10 +70,10 @@ void solve() {
 			q[++t] = std::make_pair(n, i);
 		}
 	}
-	if (f[n] == INF) {
+	if (f[n] > 1e18) {
 		std::cout << "Too hard to arrange\n";
 	} else {
-		std::cout << f[n] << "\n";
+		std::cout << (long long)(f[n] + 0.5) << "\n";
 		arrange(n);
 	}
 	std::cout << "--------------------\n";
