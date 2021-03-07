@@ -7,6 +7,9 @@ class MaxFlow_Network {
 	struct Edge {
 		int u, v;
 		Flow c;
+
+		Edge() : u(0), v(0), c(0) {}
+		Edge(int _u, int _v, Flow _c) : u(_u), v(_v), c(_c) {}
 	};
 
 	int n, S, T;
@@ -72,8 +75,12 @@ public:
 	MaxFlow_Network(int _n) : n(_n), E(_n), dep(_n), iter(_n) {}
 
 	void add_edge(int u, int v, Flow c) {
-		E[u].push_back(edge.size()), edge.push_back({u, v, c});
-		E[v].push_back(edge.size()), edge.push_back({v, u, 0});
+		E[u].push_back(edge.size()), edge.push_back(Edge(u, v, c));
+		E[v].push_back(edge.size()), edge.push_back(Edge(v, u, 0));
+	}
+
+	int edge_size() {
+		return edge.size() >> 1;
 	}
 
 	void slope(int _S, int _T, Flow &flow) {
