@@ -27,14 +27,40 @@ int main() {
 	for (int i = 0; i < n; ++i) {
 		now.push_back(i);
 	}
-	while ((int)cur.size() < b) {
+	int pos = 0;
+	while (pos < b) {
 		std::vector<int> sta;
 		for (int i : now) {
 			while (!sta.empty() && query(i)) {
 				sta.pop_back();
-				cur.pop_back();
+				--pos;
+				if (pos < b) {
+					cur.pop_back();
+				}
 			}
-			
+			if (pos < b) {
+				cur.push_back(0);
+				cur.back() = query(i);
+			}
+			++pos;
+			sta.push_back(i);
 		}
+		for (int i = (int)sta.size() - 1; i >= 0; --i) {
+			if (query(sta[i])) {
+				while ((int)sta.size() != i + 1) {
+					sta.pop_back();
+					--pos;
+					if (pos < b) {
+						cur.pop_back();
+					}
+				}
+			}
+		}
+		now.swap(sta);
 	}
+	std::cout << "0 ";
+	for (int i = 0; i < b; ++i) {
+		std::cout << cur[i];
+	}
+	std::cout << std::endl;
 }
