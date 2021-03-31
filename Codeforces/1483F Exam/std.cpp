@@ -130,13 +130,23 @@ int main() {
 	int ans = 0;
 	for (int i = 0; i < n; ++i) {
 		int u = T.rt;
-		std::map<int, int> mp;
+		std::vector<std::pair<int, int>> vec(a[i].size());
 		for (int j = 0; j < (int)a[i].size(); ++j) {
 			u = T.trans[u][a[i][j] - 'a'];
 			S.add(T.dfn[u], 1);
 			int v = T.up[T.id[u] == i ? T.fail[u] : u];
 			if (T.id[v] != -1) {
-				++mp[v];
+				vec[j] = std::make_pair(j - (int)a[T.id[v]].size() + 1, v);
+			} else {
+				vec[j] = std::make_pair(-1, -1);
+			}
+		}
+		std::map<int, int> mp;
+		int mn = a[i].size();
+		for (int j = (int)a[i].size() - 1; j >= 0; --j) {
+			if (vec[j].first != -1 && mn > vec[j].first) {
+				mn = vec[j].first;
+				++mp[vec[j].second];
 			}
 		}
 		for (auto p : mp) {
