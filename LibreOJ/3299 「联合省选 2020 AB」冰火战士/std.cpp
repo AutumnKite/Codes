@@ -1,7 +1,9 @@
 #include <bits/stdc++.h>
 
+#ifndef AT_HOME
 #define getchar myGetchar
 #define putchar myPutchar
+#endif
 
 namespace IO {
 	static const int IN_BUF = 1 << 23, OUT_BUF = 1 << 23;
@@ -115,7 +117,7 @@ int m;
 int v[N];
 
 struct BIT {
-	int ca[N], cb[N];
+	int ca[N + 1], cb[N + 1];
 	int sa, sb;
 
 	void add_a(int x, int v) {
@@ -134,44 +136,61 @@ struct BIT {
 		}
 	}
 
-	int query(int x) {
+	int query_a(int x) {
 		int s = 0;
 		for (; x; x ^= x & -x) {
-			s += ca[x] + cb[x];
+			s += ca[x];
 		}
 		return s;
 	}
 
-	std::pair<int, int> find(int v) {
+	int query_b(int x) {
+		int s = 0;
+		for (; x; x ^= x & -x) {
+			s += cb[x];
+		}
+		return s;
+	}
+
+	int find(int v) {
 		int x = 0;
 		int sum = 0;
 		for (int i = LG - 1; i >= 0; --i) {
-			if (ca[x + (1 << i)] + cb[x + (1 << i)] <= sb + v) {
+			if (x + (1 << i) <= m && sum + ca[x + (1 << i)] + cb[x + (1 << i)] <= sb + v) {
 				x += 1 << i;
 				sum += ca[x] + cb[x];
 			}
 		}
-		return std::make_pair(sum - sb, x);
+		return x;
+	}
+
+	int find_b(int v) {
+		int x = 0;
+		int sum = 0;
+		for (int i = LG - 1; i >= 0; --i) {
+			if (x + (1 << i) <= m && sum + cb[x + (1 << i)] <= v) {
+				x += 1 << i;
+				sum += cb[x];
+			}
+		}
+		return x;
 	}
 };
 
 BIT T;
 
 int main() {
-	freopen("icefire.in", "r", stdin);
-	freopen("icefire.out", "w", stdout);
-
 	read(Q);
 	for (int i = 0; i < Q; ++i) {
-		std::cin >> q[i].op;
+		read(q[i].op);
 		if (q[i].op == 1) {
-			std::cin >> q[i].t >> q[i].x >> q[i].y;
+			read(q[i].t), read(q[i].x), read(q[i].y);
 			if (!q[i].t) {
 				--q[i].x;
 			}
 			v[m++] = q[i].x;
 		} else {
-			std::cin >> q[i].t;
+			read(q[i].t);
 			--q[i].t;
 		}
 	}
@@ -194,6 +213,21 @@ int main() {
 				T.add_b(q[j].x, -q[j].y);
 			}
 		}
-		std::pair<int, int> tmp = T.find()
+		if (!T.sa || !T.sb) {
+			printStr("Peace");
+			continue;
+		}
+		int x1 = T.find(0), x2 = x1 + 1;
+		int v1 = T.query_a(x1), v2 = T.sb - T.query_b(x2);
+		if (std::max(v1, v2) == 0) {
+			printStr("Peace");
+			continue;
+		}
+		if (v1 > v2) {
+			print(v[x1], ' '), print(v1 * 2);
+		} else {
+			x2 = T.find_b(T.sb - v2);
+			print(v[x2], ' '), print(v2 * 2);
+		}
 	}
 }
