@@ -118,8 +118,8 @@ int main() {
 	std::cin >> n >> m;
 	mx = 0;
 	for (int i = 0; i < m; ++i) {
-		--E[i].u, --E[i].v;
 		std::cin >> E[i].u >> E[i].v >> E[i].w;
+		--E[i].u, --E[i].v;
 		mx = std::max(mx, E[i].w);
 	}
 	for (int i = 1; i <= mx; ++i) {
@@ -145,6 +145,9 @@ int main() {
 				a[E[i].v][E[i].v] += poly(E[i].w, 1);
 				++cnt;
 			}
+		}
+		if (cnt < n - 1) {
+			continue;
 		}
 		ans = (ans + 1ll * det(n - 1).x * phi[d]) % P;
 	}
