@@ -196,9 +196,6 @@ public:
 };
 
 int main() {
-	freopen("mex.in", "r", stdin);
-	freopen("mex.out", "w", stdout);
-
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(0);
 
