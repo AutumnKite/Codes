@@ -23,15 +23,14 @@ int main() {
 	for (int i = 0; i < n; ++i) {
 		a[i] = w[i] - g[i];
 		b[i] = g[i + 1] - w[i];
-		std::cerr << a[i] << " " << b[i] << "\n";
 	}
-	int ans = 0;
+	int ans = 1;
 	for (int l = 0; l < n; ++l) {
 		long long mx = a[l], mxv = b[l];
-		for (int r = l; r < n; ++r) {
+		for (int r = l + 1; r < n; ++r) {
 			mx = std::max(mx, a[r]);
-			mxv = std::max(mxv, b[r] + mx - a[l]);
-			if (mx - a[l] <= m && mxv <= b[r] + m - mx + a[l]) {
+			mxv = std::max(mxv, b[r - 1] + mx - a[l]);
+			if (mx - a[l] <= m && mxv <= b[r] + m) {
 				ans = std::max(ans, r - l + 1);
 			}
 		}
