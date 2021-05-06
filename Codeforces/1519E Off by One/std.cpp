@@ -30,7 +30,7 @@ int main() {
 		E[v].emplace_back(u, i);
 	}
 
-	std::vector<bool> vis(vec.size());
+	std::vector<bool> vis(vec.size()), used(n);
 	std::vector<std::pair<int, int>> ans;
 
 	std::function<bool(int, int)> dfs = [&](int u, int fi) {
@@ -38,7 +38,7 @@ int main() {
 		int lst = -1;
 		for (auto p : E[u]) {
 			int v = p.first, id = p.second;
-			if (id == fi) {
+			if (id == fi || used[id]) {
 				continue;
 			}
 			if (vis[v] || !dfs(v, id)) {
@@ -46,12 +46,14 @@ int main() {
 					lst = id;
 				} else {
 					ans.emplace_back(lst, id);
+					used[lst] = used[id] = true;
 					lst = -1;
 				}
 			}
 		}
 		if (lst != -1 && fi != -1) {
 			ans.emplace_back(lst, fi);
+			used[lst] = used[fi] = true;
 			return true;
 		} else {
 			return false;
