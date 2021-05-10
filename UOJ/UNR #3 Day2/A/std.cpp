@@ -152,10 +152,10 @@ int main() {
 	}
 
 	auto calc = [&](int u, int v) {
-		if (a[u].x >= 0 && a[v].x < 0 && cross(a[v], a[u]) > 0) {
+		if (a[u].y >= 0 && a[v].y < 0 && cross(a[v], a[u]) > 0) {
 			return 1;
 		}
-		if (a[u].x <= 0 && a[v].x > 0 && cross(a[u], a[v]) > 0) {
+		if (a[u].y <= 0 && a[v].y > 0 && cross(a[u], a[v]) > 0) {
 			return -1;
 		}
 		return 0;
