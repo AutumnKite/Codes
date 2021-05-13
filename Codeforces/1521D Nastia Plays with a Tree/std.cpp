@@ -12,33 +12,60 @@ void solve() {
 		E[v].push_back(u);
 	}
 
-	std::vector<std::tuple<int, int, int, int>> ans;
+	std::vector<std::pair<int, int>> ans;
+	std::vector<std::vector<int>> G(n);
 
-	std::function<int(int, int)> dfs = [&](int u, int fa) {
-		int lst = u;
+	std::function<bool(int, int)> dfs = [&](int u, int fa) {
+		std::vector<int> son;
 		for (int v : E[u]) {
 			if (v != fa) {
-				int leaf = dfs(v, u);
-				if (lst != u) {
-					ans.emplace_back(u, v, lst, v);
+				if (!dfs(v, u)) {
+					son.push_back(v);
 				}
-				lst = leaf;
 			}
 		}
-		return lst;
+		for (int i = 0; i < 2 && i < (int)son.size(); ++i) {
+			G[u].push_back(son[i]);
+			G[son[i]].push_back(u);
+		}
+		for (int i = 2; i < (int)son.size(); ++i) {
+			ans.emplace_back(u, son[i]);
+		}
+		if ((int)son.size() >= 2 && fa != -1) {
+			ans.emplace_back(u, fa);
+			return true;
+		} else {
+			return false;
+		}
 	};
 
+	dfs(0, -1);
+
+	std::vector<std::pair<int, int>> chain;
 	for (int i = 0; i < n; ++i) {
-		if ((int)E[i].size() <= 1) {
-			dfs(i, -1);
-			break;
-		}
+		assert((int)G[i].size() <= 2);
+		if ((int)G[i].size() == 0) {
+			chain.emplace_back(i, i);
+			continue;
+		};
+		if ((int)G[i].size() == 1) {
+			int u = G[i][0], v = i;
+			while ((int)G[u].size() == 2) {
+				int t = u;
+				u = G[u][0] ^ G[u][1] ^ v;
+				v = t;
+			}
+			if (i < u) {
+				chain.emplace_back(i, u);
+			}
+			continue;
+		};
 	}
 
 	std::cout << ans.size() << "\n";
-	for (auto p : ans) {
-		std::cout << std::get<0>(p) + 1 << " " << std::get<1>(p) + 1 << " "
-		          << std::get<2>(p) + 1 << " " << std::get<3>(p) + 1 << "\n";
+	for (int i = 0; i < (int)ans.size(); ++i) {
+		std::cout << ans[i].first + 1 << " " << ans[i].second + 1 << " "
+		          << chain[i].second + 1 << " " << chain[i + 1].first + 1 << "\n";
 	}
 }
 
