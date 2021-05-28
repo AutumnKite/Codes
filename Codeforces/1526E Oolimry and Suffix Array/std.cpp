@@ -24,7 +24,7 @@ int main() {
 		std::cin >> p[i];
 		rk[p[i]] = i;
 	}
-	rk[n + 1] = -1;
+	rk[n] = -1;
 	for (int i = 0; i < n - 1; ++i) {
 		if (rk[p[i] + 1] > rk[p[i + 1] + 1]) {
 			--m;
