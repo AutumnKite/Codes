@@ -66,9 +66,53 @@ int main() {
 
 	int n, m;
 	std::cin >> n >> m;
-	std::vector<int> l(n), r(n);
+	std::vector<int> l(n), r(n), a(n);
+	long long ans = 0;
 	for (int i = 0; i < n; ++i) {
-		std::cin >> l[i] >> r[i];
+		std::cin >> l[i] >> r[i] >> a[i];
+		ans += a[i];
+	}
+
+	auto check = [&](int s, int now) {
+		for (int i = s; i < n; ++i) {
+			if (i > s && r[i - 1] < l[i]) {
+				now = 0;
+			}
+			now += a[i];
+			int t = now / m + (now % m != 0);
+			if (t > r[i] - l[i] + 1) {
+				return false;
+			} else if (t == r[i] - l[i] + 1) {
+				now -= (t - 1) * m;
+			} else {
+				now = 0;
+			}
+		}
+		return true;
+	};
+
+	if (!check(0, 0)) {
+		std::cout << -1 << "\n";
+		return 0;
 	}
 	
+	int now = 0;
+	for (int i = 0; i < n; ++i) {
+		now += a[i];
+		int t = now / m + (now % m != 0);
+		if (t == r[i] - l[i] + 1) {
+			if (check(i + 1, now - (t - 1) * m)) {
+				now -= (t - 1) * m;
+			} else {
+				ans += t * m - now;
+				now = 0;
+			}
+		} else if (check(i + 1, now % m)) {
+			now %= m;
+		} else {
+			ans += t * m - now;
+			now = 0;
+		}
+	}
+	std::cout << ans << "\n";
 }
