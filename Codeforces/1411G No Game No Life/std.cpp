@@ -10,10 +10,49 @@ int enlarge(int n) {
 	return res;
 }
 
+int qpow(int a, int b) {
+	int s = 1;
+	for (; b; b >>= 1) {
+		if (b & 1) {
+			s = 1ll * s * a % P;
+		}
+		a = 1ll * a * a % P;
+	}
+	return s;
+}
+
 typedef std::vector<std::vector<int>> matrix;
 
 std::vector<int> Gauss(matrix a, std::vector<int> b) {
-
+	int n = a.size();
+	for (int i = 0; i < n; ++i) {
+		int k = -1;
+		for (int j = i; j < n; ++j) {
+			if (a[j][i] != -1) {
+				k = j;
+				break;
+			}
+		}
+		if (k != i) {
+			std::swap(a[k], a[i]);
+			std::swap(b[k], b[i]);
+		}
+		int inv = qpow(a[i][i], P - 2);
+		for (int j = i; j < n; ++j) {
+			a[i][j] = 1ll * a[i][j] * inv % P;
+		}
+		b[i] = 1ll * b[i] * inv % P;
+		for (int j = 0; j < n; ++j) {
+			if (j != i && a[j][i]) {
+				int t = P - a[j][i];
+				for (int k = i; k < n; ++k) {
+					a[j][k] = (a[j][k] + 1ll * a[i][k] * t) % P;
+				}
+				b[j] = (b[j] + 1ll * b[i] * t) % P;
+			}
+		}
+	}
+	return b;
 }
 
 int main() {
@@ -49,12 +88,12 @@ int main() {
 	}
 
 	std::reverse(Q.begin(), Q.end());
-	std::vector<int> vis(n, -1);
+	std::vector<int> vis(n + 1, -1);
 	std::vector<int> SG(n);
 	int mx = 0;
 	for (int u : Q) {
 		for (int v : E[u]) {
-			vis[v] = u;
+			vis[SG[v]] = u;
 		}
 		SG[u] = 0;
 		while (vis[SG[u]] == u) {
@@ -70,7 +109,14 @@ int main() {
 
 	matrix A(mx, std::vector<int>(mx));
 	std::vector<int> b(mx);
+	int inv = qpow(n + 1, P - 2);
 	for (int i = 0; i < mx; ++i) {
-		
+		A[i][i] = 1;
+		for (int j = 0; j < mx; ++j) {
+			A[i][j] = (A[i][j] + 1ll * (P - cnt[i ^ j]) * inv) % P;
+		}
 	}
+	b[0] = 1;
+	std::vector<int> res = Gauss(A, b);
+	std::cout << (P + 1 - 1ll * res[0] * inv % P) % P << "\n";
 }
