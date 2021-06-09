@@ -108,7 +108,7 @@ namespace po {
 	void IDFT(poly &f, int n) {
 		DFT(f, n);
 		std::reverse(f.begin() + 1, f.end());
-		int t = 1ll * (P - P / n) * inv[P % n] % P;
+		int t = n == 1 ? 1 : 1ll * (P - P / n) * inv[P % n] % P;
 		for (int i = 0; i < n; ++i) {
 			f[i] = 1ll * f[i] * t % P;
 		}
