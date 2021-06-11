@@ -18,31 +18,27 @@ int main() {
 	}
 
 	std::sort(a.begin(), a.end());
-	int ans = 0;
+	int sum = 0;
 	for (auto [x, d] : a) {
 		if (m >= x) {
 			m += d;
-			++ans;
+			++sum;
 		}
 	}
 
-	std::sort(b.begin(), b.end());
-	std::vector<std::vector<int>> f(b.size(), std::vector<int>(m + 1));
+	std::sort(b.begin(), b.end(), [&](std::pair<int, int> x, std::pair<int, int> y) {
+		return x.first - x.second > y.first - y.second;
+	});
+	std::vector<int> f(m + 1);
+	f[m] = sum;
+	int ans = sum;
 	for (int i = 0; i < (int)b.size(); ++i) {
-		for (int j = b[i].first; j <= m; ++j) {
-			std::priority_queue<int> Q;
-			int sum = 0;
-			for (int k = i - 1; k >= 0; --k) {
-				if (j - sum - b[i].second >= 0) {
-					f[i][j] = std::max(f[i][j], f[k][j - sum - b[i].second])
-				}
-				Q.push(b[i].second);
-				sum += b[i].second;
-				while (j - sum < b[i].first) {
-					sum -= Q.top();
-					Q.pop();
-				}
-			}
+		std::vector<int> g(f);
+		for (int j = std::max(b[i].first, b[i].second); j <= m; ++j) {
+			g[j - b[i].second] = std::max(g[j - b[i].second], f[j] + 1);
 		}
+		f.swap(g);
+		ans = std::max(ans, *std::max_element(f.begin(), f.end()));
 	}
+	std::cout << ans << "\n";
 }
