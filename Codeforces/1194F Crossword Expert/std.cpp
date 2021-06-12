@@ -24,10 +24,6 @@ int main() {
 	for (int i = 0; i < n; ++i) {
 		std::cin >> a[i];
 	}
-	std::vector<long long> sum(n + 1);
-	for (int i = 0; i < n; ++i) {
-		sum[i + 1] = sum[i] + a[i];
-	}
 
 	std::vector<int> fac(n + 1), inv(n + 1);
 	fac[0] = 1;
@@ -48,12 +44,20 @@ int main() {
 	int ans = 0;
 	int sum = 1;
 	int x = n;
+	int pw = 1;
 	for (int i = 0; i < n; ++i) {
 		T -= a[i];
 		if (T < 0) {
 			break;
 		}
 		sum = (2ll * sum + P - C(i, x)) % P;
-		for (int )
+		int nx = std::min<long long>(T, n);
+		for (int j = x; j > nx; --j) {
+			sum = (sum + P - C(i + 1, j)) % P;
+		}
+		x = nx;
+		pw = 1ll * pw * Inv2 % P;
+		ans = (ans + 1ll * pw * sum) % P;
 	}
+	std::cout << ans << "\n";
 }
