@@ -1,12 +1,14 @@
 #include <bits/stdc++.h>
 
+const int LG = 18;
+
 class basis {
-	const int B = 18;
+	const int B;
 
 	std::vector<int> a;
 
 public:
-	basis() : a(B) {}
+	basis(int x) : B(x), a(B) {}
 
 	bool insert(int x) {
 		for (int i = B - 1; i >= 0; --i) {
@@ -28,25 +30,35 @@ int main() {
 
 	int n;
 	std::cin >> n;
-	basis B;
-	std::vector<int> v;
+	std::vector<int> a(n);
 	for (int i = 0; i < n; ++i) {
-		int x;
-		std::cin >> x;
-		if (B.insert(x)) {
-			v.push_back(x);
-		}
+		std::cin >> a[i];
 	}
-	std::cout << v.size() << "\n";
-	for (int i = 0; i < (int)(1 << v.size()); ++i) {
-		int S = i ^ (i >> 1);
-		int t = 0;
-		for (int j = 0; j < (int)v.size(); ++j) {
-			if (S >> j & 1) {
-				t ^= v[j];
+
+	for (int x = LG; x >= 0; --x) {
+		basis B(x);
+		std::vector<int> v;
+		for (int i = 0; i < n; ++i) {
+			if (a[i] < (1 << x)) {
+				if (B.insert(a[i])) {
+					v.push_back(a[i]);
+				}
 			}
 		}
-		std::cout << t << " ";
+		if ((int)v.size() == x) {
+			std::cout << x << "\n";
+			for (int i = 0; i < (1 << x); ++i) {
+				int S = i ^ (i >> 1);
+				int res = 0;
+				for (int j = 0; j < x; ++j) {
+					if (S >> j & 1) {
+						res ^= v[j];
+					}
+				}
+				std::cout << res << " ";
+			}
+			std::cout << "\n";
+			return 0;
+		}
 	}
-	std::cout << "\n";
 }
