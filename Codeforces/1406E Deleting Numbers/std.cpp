@@ -1,76 +1,96 @@
 #include <bits/stdc++.h>
 
-#define debug(...) fprintf(stderr, __VA_ARGS__)
-
-const int N = 100005;
-
-int n, B, vis[N], cnt, p[N];
-
-int X, tot;
-bool ex[N];
-
-int Query(int v) {
-	// printf("B %d\n", v);
-	// fflush(stdout);
-	// int x;
-	// scanf("%d", &x);
-	// return x;
-	int x = 0;
-	for (int i = v; i <= n; i += v) {
-		x += ex[i];
-		if (i != X) {
-			ex[i] = 0;
-		}
-	}
-	++tot;
-	return x;
-}
-
-void solve() {
-	scanf("%d", &n);
-	scanf("%d", &X);
-	for (int i = 1; i <= n; ++i) {
-		ex[i] = 1;
-	}
-	B = sqrt(n);
-	while (B * B < n) {
-		++B;
-	}
-	for (int i = 1; i <= n; ++i) {
-		vis[i] = 1;
-	}
-	cnt = 0;
-	vis[1] = 0;
+std::vector<int> init_prime(int n) {
+	std::vector<bool> vis(n + 1);
+	std::vector<int> prime;
 	for (int i = 2; i <= n; ++i) {
-		if (vis[i]) {
-			p[++cnt] = i;
-			if (i <= B) {
-				Query(i);
-			}
-			for (int j = i + i; j <= n; j += i) {
-				vis[j] = 0;
-			}
+		if (!vis[i]) {
+			prime.push_back(i);
 		}
-	}
-	int ans = 1;
-	for (int i = 1; i <= cnt; ++i) {
-		while (1ll * ans * p[i] <= n) {
-			if (Query(ans) == 1) {
-				ans *= p[i];
-			} else {
+		for (int x : prime) {
+			if (x * i > n) {
+				break;
+			}
+			vis[x * i] = true;
+			if (i % x == 0) {
 				break;
 			}
 		}
 	}
-	printf("C %d\n", ans);
-	fflush(stdout);
-	printf("total: %d\n", tot);
+	return prime;
+}
+
+int query(int x) {
+	std::cout << "A " << x << std::endl;
+	int res;
+	std::cin >> res;
+	return res;
+}
+
+void erase(int x) {
+	std::cout << "B " << x << std::endl;
+	int res;
+	std::cin >> res;
+}
+
+void answer(int x) {
+	std::cout << "C " << x << std::endl;
 }
 
 int main() {
-	int T = 1;
-	// read(T);
-	while (T--) {
-		solve();
+	std::ios_base::sync_with_stdio(false);
+	std::cin.tie(0);
+
+	int n;
+	std::cin >> n;
+
+	std::vector<int> prime(init_prime(n));
+	int pos = 0;
+	while (pos < (int)prime.size() && 1ll * prime[pos] * prime[pos] <= n) {
+		++pos;
+	}
+	std::vector<int> p(prime.begin(), prime.begin() + pos);
+	std::vector<int> q(prime.begin() + pos, prime.end());
+
+	for (int x : p) {
+		erase(x);
+	}
+	int ans = 1;
+	for (int x : p) {
+		int v = x;
+		while (v <= n && query(v)) {
+			ans *= x;
+			v *= x;
+		}
+	}
+
+	if (ans == 1) {
+		int B = (int)sqrt(q.size()) + 1;
+		int lst = 0;
+		for (int i = 0; i <= (int)q.size(); ++i) {
+			if (i > 0 && (i % B == 0 || i == (int)q.size())) {
+				if (query(1) > (int)q.size() - i + 1) {
+					for (int j = lst; j < i; ++j) {
+						if (query(q[j])) {
+							ans *= q[j];
+							break;
+						}
+					}
+					break;
+				}
+				lst = i;
+			}
+			if (i < (int)q.size()) {
+				erase(q[i]);
+			}
+		}
+		answer(ans);
+	} else {
+		for (int x : q) {
+			if (query(x) > 1) {
+				ans *= x;
+			}
+		}
+		answer(ans);
 	}
 }
