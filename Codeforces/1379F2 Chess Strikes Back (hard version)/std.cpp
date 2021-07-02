@@ -6,5 +6,11 @@ int main() {
 
 	int n, m, q;
 	std::cin >> n >> m >> q;
-	std::vector<std::set<int>> S(n);
+	std::vector<std::set<int>> Sl(n), Sr(n);
+	while (q--) {
+		int x, y;
+		std::cin >> x >> y;
+		--x, --y;
+		if ()
+	}
 }
