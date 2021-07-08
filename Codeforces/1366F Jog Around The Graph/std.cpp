@@ -33,16 +33,43 @@ int main() {
 				}
 			}
 		}
+		f.swap(g);
 	}
 
 	std::vector<int> id(n);
 	std::iota(id.begin(), id.end(), 0);
 	std::sort(id.begin(), id.end(), [&](int x, int y) {
-		return mx[x] < mx[y];
+		return mx[x] < mx[y] || (mx[x] == mx[y] && b[x] > b[y]);
 	});
+
+	auto check = [&](int x, int y, int z) {
+		return 1ll * (b[x] - b[y]) * (mx[z] - mx[y]) < 1ll * (b[y] - b[z]) * (mx[y] - mx[x]);
+	};
 
 	std::vector<int> sta;
 	for (int i : id) {
-		while ((int)sta.size() > 1 && 
+		std::cerr << i << " " << mx[i] << " " << b[i] << "\n";
+		if (!sta.empty() && mx[sta.back()] == mx[i]) {
+			continue;
+		}
+		while ((int)sta.size() > 1 && !check(sta[sta.size() - 2], sta.back(), i)) {
+			sta.pop_back();
+		}
+		sta.push_back(i);
 	}
+
+	int ans = 0;
+	int lst = 0;
+	for (int i = 0; i < (int)sta.size(); ++i) {
+		if (i + 1 < (int)sta.size() && b[sta[i + 1]] > b[sta[i]]) {
+			continue;
+		}
+		int now = i + 1 < (int)sta.size() ? (b[sta[i]] - b[sta[i + 1]]) / (mx[sta[i + 1]] - mx[sta[i]]) + 1 : q + 1;
+		now = std::min(now, q + 1);
+		ans = (ans + 1ll * (lst + now - 1) * (now - lst) / 2 % P * mx[sta[i]]) % P;
+		ans = (ans + 1ll * (now - lst) * b[sta[i]]) % P;
+		std::cerr << lst << " " << now << " " << mx[sta[i]] << " " << b[sta[i]] << "\n";
+		lst = now;
+	}
+	std::cout << ans << "\n";
 }
