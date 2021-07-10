@@ -21,19 +21,25 @@ int main() {
 		mx[v] = std::max(mx[v], w);
 	}
 
-	std::vector<int> f(n, -INF), b(n, -INF);
+	std::vector<int> f(n, -INF), b(n, -INF), wf(n, -INF);
 	f[0] = 0;
 	for (int i = 0; i < n; ++i) {
-		std::vector<int> g(n, -INF);
+		std::vector<int> g(n, -INF), wg(n, -INF);
 		for (int u = 0; u < n; ++u) {
 			if (f[u] != -INF) {
-				b[u] = std::max(b[u], f[u] - mx[u] * i);
+				if (wf[u] < mx[u]) {
+					b[u] = std::max(b[u], f[u] - mx[u] * i);
+				}
 				for (auto [v, w] : E[u]) {
-					g[v] = std::max(g[v], f[u] + w);
+					if (f[u] + w > g[v]) {
+						g[v] = f[u] + w;
+						wg[v] = std::max(wf[u], w);
+					}
 				}
 			}
 		}
 		f.swap(g);
+		wf.swap(wg);
 	}
 
 	std::vector<int> id(n);
@@ -48,7 +54,6 @@ int main() {
 
 	std::vector<int> sta;
 	for (int i : id) {
-		std::cerr << i << " " << mx[i] << " " << b[i] << "\n";
 		if (!sta.empty() && mx[sta.back()] == mx[i]) {
 			continue;
 		}
@@ -68,8 +73,7 @@ int main() {
 		now = std::min(now, q + 1);
 		ans = (ans + 1ll * (lst + now - 1) * (now - lst) / 2 % P * mx[sta[i]]) % P;
 		ans = (ans + 1ll * (now - lst) * b[sta[i]]) % P;
-		std::cerr << lst << " " << now << " " << mx[sta[i]] << " " << b[sta[i]] << "\n";
 		lst = now;
 	}
-	std::cout << ans << "\n";
+	std::cout << (ans + P) % P << "\n";
 }
