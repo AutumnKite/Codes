@@ -7,6 +7,17 @@ int main() {
 	int n, m, k, P;
 	std::cin >> n >> m >> k >> P;
 
+	auto qpow = [&](int a, int b) {
+		int s = 1;
+		for (; b; b >>= 1) {
+			if (b & 1) {
+				s = 1ll * s * a % P;
+			}
+			a = 1ll * a * a % P;
+		}
+		return s;
+	};
+
 	if (n <= 2) {
 		std::cout << 1 << "\n";
 		return 0;
@@ -29,7 +40,10 @@ int main() {
 	    std::vector<std::vector<int>>(n, std::vector<int>(n))));
 	for (int x = 0; x < m; ++x) {
 		for (int d = 0; d <= k + 1 && x + d < m; ++d) {
-			f[x][d][0][1] = f[x][d][1][0] = 1;
+			f[x][d][0][1] = 1;
+			if (d > 0) {
+				f[x][d][1][0] = f[x][d][0][1];
+			}
 		}
 	}
 	for (int l = 2; l < n; ++l) {
@@ -47,8 +61,22 @@ int main() {
 								inc(g[y][k + 1 - d][j][j + 1], v);
 								inc(g[y][k + 1 - d][j + 1][0], v);
 								dec(g[y][k + 1 - d][j + 1][j + 1], v);
+								if (d <= k && y + 1 < m) {
+									dec(g[y + 1][k + 1 - d][j][j + 1], v);
+									dec(g[y + 1][k + 1 - d][j + 1][0], v);
+									inc(g[y + 1][k + 1 - d][j + 1][j + 1], v);
+								}
 							}
 						}
+					}
+				}
+			}
+		}
+		for (int x = 1; x < m; ++x) {
+			for (int d = 0; d <= k + 1; ++d) {
+				for (int i = 0; i <= l; ++i) {
+					for (int j = 0; j <= l; ++j) {
+						inc(g[x][d][i][j], g[x - 1][d][i][j]);
 					}
 				}
 			}
@@ -58,11 +86,6 @@ int main() {
 				for (int i = 0; i <= l; ++i) {
 					for (int j = 0; j <= l; ++j) {
 						inc(g[x][d][i][j], g[x][d - 1][i][j]);
-						if (x + d >= m) {
-							g[x][d][i][j] = 0;
-						} else if (d == k + 1) {
-							g[x][d][i][j] = 1ll * g[x][d][i][j] * (m - x - d) % P;
-						}
 					}
 				}
 			}
@@ -79,12 +102,7 @@ int main() {
 								if (i < j) {
 									inc(g[y][k - d][j + 1][i + 1], v);
 									dec(g[y][k - d][j + 1][j + 1], v);
-								} else {
-									inc(g[y][k - d][j][j + 1], v);
-									dec(g[y][k - d][j][i + 1], v);
 								}
-								inc(g[y][k - d][j + 1][0], v);
-								dec(g[y][k - d][j + 1][std::min(i, j) + 1], v);
 							}
 						}
 					}
@@ -100,21 +118,34 @@ int main() {
 				}
 			}
 		}
+		for (int x = 0; x < m; ++x) {
+			for (int d = 0; d <= k + 1; ++d) {
+				for (int i = 0; i <= l; ++i) {
+					for (int j = 0; j <= l; ++j) {
+						if (i == j || (d == 0 && j < i) || x + d >= m) {
+							g[x][d][i][j] = 0;
+						}
+					}
+				}
+			}
+		}
 		f.swap(g);
 	}
 	int ans = 0;
 	for (int x = 0; x < m; ++x) {
 		for (int d = 0; d <= k + 1; ++d) {
-			int y = x + d;
-			if (y < m) {
-				for (int i = 0; i < n; ++i) {
-					for (int j = 0; j < n; ++j) {
-						int v = f[x][d][i][j];
+			for (int i = 0; i < n; ++i) {
+				for (int j = 0; j < n; ++j) {
+					int v = f[x][d][i][j];
+					if (v) {
+						if (d == k + 1) {
+							v = 1ll * v * (m - x - d) % P;
+						}
 						inc(ans, v);
 					}
 				}
 			}
 		}
 	}
-	std::cout << ans << "\n";
+	std::cout << 1ll * ans * qpow(m, P - 1 - n) % P << "\n";
 }
