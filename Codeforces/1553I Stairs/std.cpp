@@ -1,7 +1,5 @@
 #include <bits/stdc++.h>
 
-std::pair<int, int> a;
-
 template<unsigned P>
 class modint {
     static_assert(1 <= P);
@@ -144,6 +142,9 @@ constexpr unsigned __pow_mod_constexpr(unsigned a, unsigned b, unsigned P) {
 }
 
 constexpr unsigned primitive_root(unsigned n) {
+    if (n == 998244353) {
+        return 3;
+    }
     unsigned x = n - 1;
     int cnt = 0;
     int div[20] = {};
@@ -258,11 +259,11 @@ public:
         return f;
     }
 
-    bool empty() {
+    bool empty() const {
         return f.empty();
     }
 
-    size_type size() {
+    size_type size() const {
         return f.size();
     }
 
@@ -315,6 +316,16 @@ public:
             return poly();
         }
         _n = std::min(_n, a.size() + b.size() - 1);
+        if (a.size() <= 30 || b.size() <= 30) {
+            poly res(a.size() + b.size() - 1);
+            for (size_type i = 0; i < a.size(); ++i) {
+                for (size_type j = 0; j < b.size(); ++j) {
+                    res[i + j] += a[i] * b[j];
+                }
+            }
+            res.f.resize(_n);
+            return res;
+        }
         size_type n = enlarge_to_pow2(_n);
         a.DFT(n), b.DFT(n);
         for (size_type i = 0; i < n; ++i) {
@@ -324,14 +335,127 @@ public:
         a.vec().resize(_n);
         return a;
     }
+
+    poly &operator+=(const poly &rhs) {
+        if (rhs.size() > f.size()) {
+            f.resize(rhs.size());
+        }
+        for (size_type i = 0; i < rhs.size(); ++i) {
+            f[i] += rhs[i];
+        }
+        return *this;
+    }
+
+    poly operator+(const poly &rhs) const {
+        poly res(*this);
+        res += rhs;
+        return res;
+    }
+
+    poly &operator-=(const poly &rhs) {
+        if (rhs.size() > f.size()) {
+            f.resize(rhs.size());
+        }
+        for (size_type i = 0; i < rhs.size(); ++i) {
+            f[i] -= rhs[i];
+        }
+        return *this;
+    }
+
+    poly operator-(const poly &rhs) const {
+        poly res(*this);
+        res -= rhs;
+        return res;
+    }
+
+    poly operator*(const poly &rhs) const {
+        return mul(*this, rhs);
+    }
+
+    poly &operator*=(const poly &rhs) {
+        return *this = *this * rhs;
+    }
+
+    poly &operator*=(const mint &rhs) {
+        for (size_type i = 0; i < f.size(); ++i) {
+            f[i] *= rhs;
+        }
+        return *this;
+    }
+
+    poly operator*(const mint &rhs) const {
+        poly res(*this);
+        res *= rhs;
+        return res;
+    }
 };
 
 template<unsigned P, unsigned L> typename polyP<P, L>::__init polyP<P, L>::init;
 
-using poly = polyP<998244353, 21>;
+using mint = modint<998244353>;
+using poly = polyP<998244353, 18>;
+using matrix = std::array<std::array<poly, 2>, 2>;
+
+matrix operator*(const matrix &A, const matrix &B) {
+    matrix res;
+    for (int i = 0; i < 2; ++i) {
+        for (int k = 0; k < 2; ++k) {
+            for (int j = 0; j < 2; ++j) {
+                res[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+    return res;
+}
+
+matrix solve(std::vector<int>::iterator l, std::vector<int>::iterator r) {
+    if (r - l == 1) {
+        matrix res;
+        res[0][0] = poly({0, *l == 1 ? mint(2).inv() : mint(1)});
+        res[0][1] = mint(1);
+        res[1][0] = poly({0, 1});
+        res[1][1] = mint(1);
+        return res;
+    }
+    auto mid = l + (r - l + 1) / 2;
+    return solve(l, mid) * solve(mid, r);
+}
 
 int main() {
     std::ios_base::sync_with_stdio(false);
     std::cin.tie(0);
 
+    int n;
+    std::cin >> n;
+    std::vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        std::cin >> a[i];
+    }
+    std::vector<int> c;
+    for (int i = 0; i < n; i += a[i]) {
+        if (i + a[i] > n) {
+            std::cout << 0 << "\n";
+            return 0;
+        }
+        for (int j = i + 1; j < i + a[i]; ++j) {
+            if (a[j] != a[i]) {
+                std::cout << 0 << "\n";
+                return 0;
+            }
+        }
+        c.push_back(a[i]);
+    }
+    int m = c.size();
+    poly res = solve(c.begin(), c.end())[0][0];
+    mint ans = 0;
+    mint tmp = 1;
+    for (int i = 1; i <= m; ++i) {
+        tmp *= 2 * i;
+        if ((m - i) & 1) {
+            ans -= res[i] * tmp;
+        } else {
+            ans += res[i] * tmp;
+        }
+    }
+    std::cout << ans << "\n";
 }
