@@ -9,16 +9,12 @@
 
 namespace myh {
 
-#if __cplusplus > 201103L
-template<typename _Val, typename _Tag = _Val, 
+template<typename _Val, 
          typename _VV = std::plus<>, 
+         typename _Tag = _Val, 
          typename _VT = std::plus<>, 
          typename _TT = std::plus<>>
-#else
-template<typename _Val, typename _Tag, 
-         typename _VV, typename _VT, typename _TT>
-#endif
-class segment_tree {
+class lazy_seg_tree {
 public:
     typedef std::size_t size_type;
 
@@ -63,20 +59,19 @@ protected:
             val[u] = _Val(a[l]);
             return;
         }
-        size_type mid = (l + r + 1) >> 1;
+        size_type mid = (l + r) >> 1;
         build(u << 1, l, mid, a);
         build(u << 1 | 1, mid, r, a);
         up(u);
     }
 
-    template<typename T>
     void modify(size_type u, size_type l, size_type r, 
-                size_type x, const T &v) {
+                size_type x, const _Val &v) {
         if (l + 1 == r) {
-            val[u] = _Val(v);
+            val[u] = v;
             return;
         }
-        size_type mid = (l + r + 1) >> 1;
+        size_type mid = (l + r) >> 1;
         down(u);
         if (x < mid) {
             modify(u << 1, l, mid, x, v);
@@ -92,7 +87,7 @@ protected:
             apply(u, v);
             return;
         }
-        size_type mid = (l + r + 1) >> 1;
+        size_type mid = (l + r) >> 1;
         down(u);
         if (L < mid) {
             modify(u << 1, l, mid, L, R, v);
@@ -108,7 +103,7 @@ protected:
         if (L <= l && r <= R) {
             return val[u];
         }
-        size_type mid = (l + r + 1) >> 1;
+        size_type mid = (l + r) >> 1;
         down(u);
         if (R <= mid) {
             return query(u << 1, l, mid, L, R);
@@ -121,23 +116,24 @@ protected:
     }
 
 public:
-    segment_tree() : segment_tree(0) {}
+    lazy_seg_tree() : lazy_seg_tree(0) {}
 
-    segment_tree(size_type _n)
+    lazy_seg_tree(size_type _n)
     : n(_n), en(enlarge(n)), val(en << 1), tag(en << 1) {}
 
     template<typename T>
-    segment_tree(const std::vector<T> &a)
+    lazy_seg_tree(const std::vector<T> &a)
     : n(a.size()), en(enlarge(n)), val(en << 1), tag(en << 1) {
-        build(1, 0, n, a);
+        if (n) {
+            build(1, 0, n, a);
+        }
     }
 
     size_type size() const {
         return n;
     }
 
-    template<typename T>
-    void modify(size_type x, const T &v) {
+    void modify(size_type x, const _Val &v) {
         modify(1, 0, n, x, v);
     }
 

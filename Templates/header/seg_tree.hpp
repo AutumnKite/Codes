@@ -9,8 +9,9 @@
 
 namespace myh {
 
-template<typename _Val, typename _VV = std::plus<_Val>>
-class segment_tree {
+template<typename _Val, 
+         typename _VV = std::plus<>>
+class seg_tree {
 public:
     typedef std::size_t size_type;
 
@@ -41,20 +42,19 @@ protected:
             val[u] = _Val(a[l]);
             return;
         }
-        size_type mid = (l + r + 1) >> 1;
+        size_type mid = (l + r) >> 1;
         build(u << 1, l, mid, a);
         build(u << 1 | 1, mid, r, a);
         up(u);
     }
 
-    template<typename T>
     void modify(size_type u, size_type l, size_type r, 
-                size_type x, const T &v) {
+                size_type x, const _Val &v) {
         if (l + 1 == r) {
-            val[u] = _Val(v);
+            val[u] = v;
             return;
         }
-        size_type mid = (l + r + 1) >> 1;
+        size_type mid = (l + r) >> 1;
         if (x < mid) {
             modify(u << 1, l, mid, x, v);
         } else {
@@ -68,7 +68,7 @@ protected:
         if (L <= l && r <= R) {
             return val[u];
         }
-        size_type mid = (l + r + 1) >> 1;
+        size_type mid = (l + r) >> 1;
         if (R <= mid) {
             return query(u << 1, l, mid, L, R);
         } else if (L >= mid) {
@@ -80,13 +80,13 @@ protected:
     }
 
 public:
-    segment_tree() : segment_tree(0) {}
+    seg_tree() : seg_tree(0) {}
 
-    segment_tree(size_type _n)
+    seg_tree(size_type _n)
     : n(_n), en(enlarge(n)), val(en << 1) {}
 
     template<typename T>
-    segment_tree(const std::vector<T> &a)
+    seg_tree(const std::vector<T> &a)
     : n(a.size()), en(enlarge(n)), val(en << 1) {
         if (n) {
             build(1, 0, n, a);
@@ -97,8 +97,7 @@ public:
         return n;
     }
 
-    template<typename T>
-    void modify(size_type x, const T &v) {
+    void modify(size_type x, const _Val &v) {
         modify(1, 0, n, x, v);
     }
 
