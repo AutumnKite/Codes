@@ -6,17 +6,22 @@ int main() {
 
     int n, m;
     std::cin >> n >> m;
-    std::vector<int> mu(n + 1);
+
+    std::vector<int> v(n + 1);
     for (int i = 1; i <= n; ++i) {
-        mu[i] += (i == 1);
-        for (int j = i + i; j <= n; j += i) {
-            mu[j] -= mu[i];
+        v[i] = i;
+    }
+    for (int i = 1; i * i <= n; ++i) {
+        for (int j = i * i; j <= n; j += i) {
+            while (v[j] % (i * i) == 0) {
+                v[j] /= i;
+            }
         }
     }
 
     std::vector<int> p;
     for (int i = 1; i <= n; ++i) {
-        if (mu[i]) {
+        if (v[i] == i) {
             p.push_back(i);
         }
     }
@@ -30,5 +35,27 @@ int main() {
     for (int x : p) {
         std::cin >> f[x];
     }
-    std::vector<int> 
+    for (int i = 2; i <= n; ++i) {
+        if (v[i] == i) {
+            f[i] ^= f[1];
+        }
+    }
+    for (int i = 2; i <= n; ++i) {
+        if (v[i] == i) {
+            for (int j = i + i; j <= n; j += i) {
+                if (v[j] == j) {
+                    f[j] ^= f[i];
+                }
+            }
+        }
+    }
+    for (int i = n; i >= 1; --i) {
+        if (v[i] == i) {
+            for (int j = i + i; j <= n; j += i) {
+                if (v[j] == j) {
+                    f[i] ^= f[j];
+                }
+            }
+        }
+    }
 }
