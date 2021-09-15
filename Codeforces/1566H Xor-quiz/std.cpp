@@ -2,13 +2,12 @@
 
 class linear_basis {
     const int B;
-
-    int cnt;
-    int a[20], mask[20], bas[20];
-
+ 
+    std::vector<int> a, mask, bas;
+ 
 public:
-    linear_basis(int _B) : B(_B), cnt(0), a(), mask(), bas() {}
-
+    linear_basis(int _B) : B(_B), a(B), mask(B) {}
+ 
     std::pair<int, bool> insert(int x) {
         int tmp = x, s = 0;
         for (int i = B - 1; i >= 0; --i) {
@@ -17,8 +16,8 @@ public:
                     x ^= a[i];
                     s ^= mask[i];
                 } else {
-                    int v = 1 << cnt;
-                    bas[cnt++] = tmp;
+                    int v = 1 << bas.size();
+                    bas.push_back(tmp);
                     a[i] = x;
                     mask[i] = s ^ v;
                     return std::pair<int, bool>(v, true);
@@ -27,9 +26,9 @@ public:
         }
         return std::pair<int, bool>(s, false);
     }
-
+ 
     std::vector<int> basis() const {
-        return std::vector<int>(bas, bas + cnt);
+        return bas;
     }
 };
 
@@ -97,14 +96,20 @@ int main() {
     int lg = std::__lg(n) + 1;
 
     std::vector<std::pair<int, bool>> st(n + 1);
-    std::vector<linear_basis> b(n + 1, linear_basis(lg));
-    for (int i = 1; i <= n; ++i) {
-        st[i] = b[v[i]].insert(i);
-    }
     std::vector<int> mask(n + 1);
+    std::vector<std::vector<int>> b(n + 1);
+    int sum = 0;
     for (int i = 1; i <= n; ++i) {
         if (v[i] == i) {
-            mask[i] = b[i].insert(f[i]).first;
+            linear_basis B(lg);
+            for (int j = i; j <= n; j += i) {
+                if (v[j] == i) {
+                    st[j] = B.insert(j);
+                }
+            }
+            mask[i] = B.insert(f[i]).first;
+            b[i] = B.basis();
+            sum += b[i].size();
         }
     }
 
@@ -113,42 +118,60 @@ int main() {
         bitcnt[i] = bitcnt[i >> 1] + (i & 1);
     }
 
-    while (1) {
-        std::vector<int> tmp(mask);
-        std::vector<bool> sel(n + 1);
-        int tot = 0;
-        for (int i = 1; i <= n; ++i) {
-            if (!st[i].second) {
-                sel[i] = rnd() & 1;
-                if (sel[i]) {
-                    tmp[v[i]] ^= st[i].first;
-                    ++tot;
-                }
-            }
-        }
-        for (int i = 1; i <= n; ++i) {
-            if (v[i] == i) {
-                tot += bitcnt[tmp[v[i]]];
-            }
-        }
-        if (tot == m) {
-            for (int i = 1; i <= n; ++i) {
-                if (sel[i]) {
-                    std::cout << i << " ";
-                }
-            }
-            for (int i = 1; i <= n; ++i) {
-                if (v[i] == i) {
-                    auto bas = b[i].basis();
-                    for (int j = 0; j < (int)bas.size(); ++j) {
-                        if (tmp[i] >> j & 1) {
-                            std::cout << bas[j] << " ";
-                        }
-                    }
-                }
-            }
-            std::cout << std::endl;
-            return 0;
+    std::vector<int> ch;
+    for (int i = 1; i <= n; ++i) {
+        if (!st[i].second) {
+            ch.push_back(i);
         }
     }
+
+    std::vector<bool> sel(n + 1);
+    int tot = 0;
+    for (int i : ch) {
+        sel[i] = rnd() & 1;
+        if (sel[i]) {
+            mask[v[i]] ^= st[i].first;
+            ++tot;
+        }
+    }
+    for (int i = 1; i <= n; ++i) {
+        if (v[i] == i) {
+            tot += bitcnt[mask[i]];
+        }
+    }
+
+    while (tot != m) {
+        int i = ch[rnd() % ch.size()];
+        int tmp = tot;
+        if (sel[i]) {
+            --tot;
+        } else {
+            ++tot;
+        }
+        tot -= bitcnt[mask[v[i]]];
+        mask[v[i]] ^= st[i].first;
+        tot += bitcnt[mask[v[i]]];
+        if (abs(tot - m) <= abs(tmp - m) || !(rnd() % (3 * ch.size()))) {
+            sel[i].flip();
+        } else {
+            mask[v[i]] ^= st[i].first;
+            tot = tmp;
+        }
+    }
+
+    for (int i : ch) {
+        if (sel[i]) {
+            std::cout << i << " ";
+        }
+    }
+    for (int i = 1; i <= n; ++i) {
+        if (v[i] == i) {
+            for (int j = 0; j < (int)b[i].size(); ++j) {
+                if (mask[i] >> j & 1) {
+                    std::cout << b[i][j] << " ";
+                }
+            }
+        }
+    }
+    std::cout << std::endl;
 }
