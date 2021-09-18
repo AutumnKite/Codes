@@ -135,6 +135,7 @@ int main() {
         --a[i];
     }
     a.erase(std::unique(a.begin(), a.end()), a.end());
+    m = a.size();
 
     std::vector<int> L(n, -1), R(n, -1);
     std::vector<int> sta;
@@ -142,14 +143,14 @@ int main() {
         while (!sta.empty() && sta.back() > a[i]) {
             sta.pop_back();
         }
-        if (L[a[i]] == -1 && (sta.empty() || sta.back() < a[i])) {
+        if (L[a[i]] != -1 && (sta.empty() || sta.back() < a[i])) {
             std::cout << 0 << "\n";
             return 0;
         }
         if (L[a[i]] == -1) {
             L[a[i]] = i;
         }
-        R[a[i]] = i + 1;
+        R[a[i]] = i;
         sta.push_back(a[i]);
     }
 
@@ -180,6 +181,7 @@ int main() {
         for (int i = L[mn] + 1; i <= R[mn]; ++i) {
             if (a[i] == mn) {
                 ans *= self(self, lst + 1, i - 1);
+                lst = i;
             }
         }
         vis[a[l]][a[r]] = true;
@@ -187,5 +189,5 @@ int main() {
         return ans;
     };
 
-    std::cout << solve(solve, 0, n - 1) << "\n";
+    std::cout << solve(solve, 0, m - 1) << "\n";
 }
