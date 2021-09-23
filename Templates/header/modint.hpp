@@ -42,6 +42,12 @@ public:
         return P;
     }
 
+    static mint raw(unsigned v) {
+        mint res;
+        res.v = v;
+        return res;
+    }
+
     mint &operator+=(const mint &rhs) {
         v < P - rhs.v ? v += rhs.v : v -= P - rhs.v;
         return *this;
