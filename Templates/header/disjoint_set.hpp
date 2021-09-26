@@ -2,7 +2,6 @@
 #define MYH_DISJOINT_SET_HPP 1
 
 #include <cstdlib>
-#include <iostream>
 #include <algorithm>
 #include <numeric>
 #include <vector>

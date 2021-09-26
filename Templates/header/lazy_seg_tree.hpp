@@ -2,7 +2,6 @@
 #define MYH_LAZY_SEG_TREE_HPP 1
 
 #include <cstdlib>
-#include <iostream>
 #include <algorithm>
 #include <functional>
 #include <vector>

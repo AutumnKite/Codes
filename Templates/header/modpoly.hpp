@@ -2,7 +2,6 @@
 #define MYH_MODPOLY_HPP 1
 
 #include <cstdlib>
-#include <iostream>
 #include <algorithm>
 #include <vector>
 

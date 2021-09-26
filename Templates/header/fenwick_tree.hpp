@@ -2,7 +2,6 @@
 #define MYH_FENWICK_TREE 1
 
 #include <cstdlib>
-#include <iostream>
 #include <algorithm>
 #include <functional>
 #include <vector>
