@@ -1,12 +1,4 @@
-#ifndef MYH_LAZY_SEG_TREE_HPP
-#define MYH_LAZY_SEG_TREE_HPP 1
-
-#include <cstdlib>
-#include <algorithm>
-#include <functional>
-#include <vector>
-
-namespace myh {
+#include <bits/stdc++.h>
 
 template<typename _Val, 
          typename _VV = std::plus<>, 
@@ -151,6 +143,69 @@ public:
     }
 };
 
-} // namespace myh
+template<typename T>
+struct min {
+    const T &operator()(const T &a, const T &b) const {
+        return std::min(a, b);
+    }
+};
 
-#endif // MYH_LAZY_SEG_TREE_HPP
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int n, q;
+    std::cin >> n >> q;
+    std::vector<std::vector<std::pair<int, int>>> E(n);
+    std::vector<int> fa(n, -1), fw(n);
+    std::vector<long long> dis(n);
+    for (int i = 1; i < n; ++i) {
+        std::cin >> fa[i] >> fw[i];
+        --fa[i];
+        E[fa[i]].emplace_back(i, fw[i]);
+        dis[i] = dis[fa[i]] + fw[i];
+    }
+
+    std::vector<int> end(n);
+    for (int i = n - 1; i >= 0; --i) {
+        end[i] = std::max(end[i], i + 1);
+        if (fa[i] != -1) {
+            end[fa[i]] = std::max(end[fa[i]], end[i]);
+        }
+    }
+
+    std::vector<std::vector<std::tuple<int, int, int>>> Q(n);
+    for (int i = 0; i < q; ++i) {
+        int v, l, r;
+        std::cin >> v >> l >> r;
+        --v, --l;
+        Q[v].emplace_back(l, r, i);
+    }
+
+    std::vector<long long> ans(q);
+    lazy_seg_tree<long long, min<long long>, long long> T(dis);
+    for (int i = 0; i < n; ++i) {
+        if (!E[i].empty()) {
+            T.modify(i, 1e18);
+        }
+    }
+
+    auto dfs = [&](auto &self, int u) -> void {
+        for (auto [l, r, i] : Q[u]) {
+            ans[i] = T.query(l, r);
+        }
+        for (auto [v, w] : E[u]) {
+            T.modify(0, n, w);
+            T.modify(v, end[v], -2 * w);
+            self(self, v);
+            T.modify(v, end[v], 2 * w);
+            T.modify(0, n, -w);
+        }
+    };
+
+    dfs(dfs, 0);
+    
+    for (int i = 0; i < q; ++i) {
+        std::cout << ans[i] << "\n";
+    }
+}
