@@ -8,10 +8,10 @@
 
 namespace myh {
 
-template<typename _Val, 
-         typename _VV = std::plus<>, 
-         typename _Tag = _Val, 
-         typename _VT = std::plus<>, 
+template<typename _Val,
+         typename _VV = std::plus<>,
+         typename _Tag = _Val,
+         typename _VT = std::plus<>,
          typename _TT = std::plus<>>
 class lazy_seg_tree {
 public:
