@@ -23,13 +23,16 @@ int main() {
         return 0;
     }
 
-    auto solve = [&](int d, long long t) {
+    auto solve = [&](int d) {
+        long long t = s;
         std::vector<int> p(n), dep(n);
         p[0] = -1;
         dep[0] = 1;
+        --t;
         for (int i = 1; i < n; ++i) {
             p[i] = (i - 1) / d;
             dep[i] = dep[p[i]] + 1;
+            t -= dep[i];
         }
 
         if (!t) {
@@ -37,20 +40,33 @@ int main() {
         }
 
         std::vector<bool> chain(n);
-        long long c = 1;
+        long long c = 0;
         int lst = -1;
-        while (c <= n) {
-            chain[c - 1] = true;
-            lst = c - 1;
-            c *= d;
+        while (c < n) {
+            chain[c] = true;
+            lst = c;
+            c = c * d + 1;
         }
 
         for (int i = n - 1; i >= 0; --i) {
             if (!chain[i]) {
                 int delta = dep[lst] - dep[p[i]];
-                if (delta >= 
+                if (t > delta) {
+                    p[i] = lst;
+                    dep[i] = dep[lst] + 1;
+                    t -= delta;
+                    lst = i;
+                } else {
+                    int u = lst;
+                    for (int j = 0; j < delta - t; ++j) {
+                        u = p[u];
+                    }
+                    p[i] = u;
+                    break;
+                }
             }
         }
+        return p;
     };
 
     for (int d = 2; d < n; ++d) {
@@ -69,7 +85,11 @@ int main() {
             }
         }
         if (t >= 0) {
-            solve(d, t);
+            auto p = solve(d);
+            for (int i = 1; i < n; ++i) {
+                std::cout << p[i] + 1 << " ";
+            }
+            std::cout << "\n";
             return 0;
         }
     }
