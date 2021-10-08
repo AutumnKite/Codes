@@ -18,8 +18,11 @@ protected:
 public:
     modint() : v() {}
 
-    template<typename T, typename std::enable_if<std::__and_<
-      std::is_signed<T>, std::is_integral<T>>::value, bool>::type = true>
+    template<typename T, 
+             typename std::enable_if<
+                      std::is_signed<T>::value
+                      && std::is_integral<T>::value,
+                      bool>::type = true>
     modint(T _v) {
         long long tmp = _v % static_cast<long long>(P);
         if (tmp < 0) {
@@ -28,8 +31,12 @@ public:
         v = tmp;
     }
 
-    template<typename T, typename std::enable_if<std::__and_<
-      std::is_unsigned<T>, std::is_integral<T>>::value, bool>::type = true>
+
+    template<typename T, 
+             typename std::enable_if<
+                      std::is_unsigned<T>::value
+                      && std::is_integral<T>::value,
+                      bool>::type = true>
     modint(T _v) {
         v = _v % P;
     }

@@ -1,13 +1,140 @@
-#ifndef MYH_MODPOLY_HPP
-#define MYH_MODPOLY_HPP 1
+#include <bits/stdc++.h>
 
-#include <cstdlib>
-#include <algorithm>
-#include <vector>
+template<unsigned P>
+class modint {
+    static_assert(1 <= P);
 
-#include "modint"
+    using mint = modint<P>;
 
-namespace myh {
+protected:
+    unsigned v;
+
+public:
+    modint() : v() {}
+
+    template<typename T, 
+             typename std::enable_if<
+                      std::is_signed<T>::value
+                      && std::is_integral<T>::value,
+                      bool>::type = true>
+    modint(T _v) {
+        long long tmp = _v % static_cast<long long>(P);
+        if (tmp < 0) {
+            tmp += P;
+        }
+        v = tmp;
+    }
+
+
+    template<typename T, 
+             typename std::enable_if<
+                      std::is_unsigned<T>::value
+                      && std::is_integral<T>::value,
+                      bool>::type = true>
+    modint(T _v) {
+        v = _v % P;
+    }
+
+    unsigned val() const {
+        return v;
+    }
+
+    static constexpr unsigned mod() {
+        return P;
+    }
+
+    static mint raw(unsigned v) {
+        mint res;
+        res.v = v;
+        return res;
+    }
+
+    mint &operator+=(const mint &rhs) {
+        v < P - rhs.v ? v += rhs.v : v -= P - rhs.v;
+        return *this;
+    }
+
+    mint &operator++() {
+        v + 1 < P ? ++v : v = 0;
+        return *this;
+    }
+
+    mint operator++(int) {
+        mint tmp = *this;
+        v + 1 < P ? ++v : v = 0;
+        return tmp;
+    }
+
+    mint &operator-=(const mint &rhs) {
+        v < rhs.v ? v += P - rhs.v : v -= rhs.v;
+        return *this;
+    }
+
+    mint &operator--() {
+        v == 0 ? v = P - 1 : --v;
+        return *this;
+    }
+
+    mint operator--(int) {
+        mint tmp = *this;
+        v == 0 ? v = P - 1 : --v;
+        return tmp;
+    }
+
+    mint operator-() const {
+        mint res;
+        res.v = v == 0 ? 0 : P - v;
+        return res;
+    }
+
+    mint &operator*=(const mint &rhs) {
+        v = static_cast<unsigned long long>(v) * rhs.v % P;
+        return *this;
+    }
+
+    mint pow(unsigned long long b) const {
+        mint a(*this), s(1);
+        for (; b; b >>= 1) {
+            if (b & 1) {
+                s *= a;
+            }
+            a *= a;
+        }
+        return s;
+    }
+
+    mint inv() const {
+        return pow(P - 2);
+    }
+
+    friend mint operator+(const mint &lhs, const mint &rhs) {
+        return mint(lhs) += rhs;
+    }
+
+    friend mint operator-(const mint &lhs, const mint &rhs) {
+        return mint(lhs) -= rhs;
+    }
+
+    friend mint operator*(const mint &lhs, const mint &rhs) {
+        return mint(lhs) *= rhs;
+    }
+
+    friend bool operator==(const mint &lhs, const mint &rhs) {
+        return lhs.v == rhs.v;
+    }
+
+    friend bool operator!=(const mint &lhs, const mint &rhs) {
+        return lhs.v != rhs.v;
+    }
+
+    friend std::istream &operator>>(std::istream &in, mint &x) {
+        return in >> x.v;
+    }
+
+    friend std::ostream &operator<<(std::ostream &out, const mint &x) {
+        return out << x.v;
+    }
+};
 
 constexpr unsigned pow_mod_constexpr(unsigned a, unsigned b, unsigned P) {
     unsigned s = 1;
@@ -275,7 +402,7 @@ public:
         return poly(lhs) *= rhs;
     }
 
-    poly inv(size_type _n = f.size()) const {
+    poly inv(size_type _n) const {
         size_type n = enlarge_to_pow2(_n);
         poly a(*this), res(1);
         a.resize(n);
@@ -283,8 +410,7 @@ public:
         for (size_type m = 2; m <= n; m <<= 1) {
             size_type l = m << 1;
             poly tmp(std::vector<mint>(a.f.begin(), a.f.begin() + m));
-            tmp.DFT(l);
-            res.DFT(l);
+            tmp.DFT(l), res.DFT(l);
             for (size_type i = 0; i < l; ++i) {
                 res[i] += res[i] - tmp[i] * res[i] * res[i];
             }
@@ -299,6 +425,87 @@ public:
 template<unsigned P, unsigned L>
 typename modpoly<P, L>::initializer modpoly<P, L>::init;
 
-} // namespace myh
+using mint = modint<998244353>;
+using poly = modpoly<998244353, 18>;
 
-#endif // MYH_MODPOLY_HPP
+std::vector<mint> fac, ifac;
+
+void init(int n) {
+    fac.resize(n + 1), ifac.resize(n + 1);
+    fac[0] = 1;
+    for (int i = 1; i <= n; ++i) {
+        fac[i] = fac[i - 1] * i;
+    }
+    ifac[n] = fac[n].inv();
+    for (int i = n; i >= 1; --i) {
+        ifac[i - 1] = ifac[i] * i;
+    }
+}
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int n, m;
+    std::cin >> n >> m;
+    
+    init(n);
+
+    if (!(n & 1)) {
+        int tn = n / 2;
+        std::vector<mint> f(tn + 1);
+        f[0] = 1;
+        for (int i = 0; i < tn; ++i) {
+            f[i + 1] = f[i] * (m + i + 1) * (m - i);
+        }
+        for (int i = 0; i <= tn; ++i) {
+            f[i] *= ifac[i * 2];
+        }
+        std::vector<mint> g(tn + 1);
+        for (int i = 0; i <= tn; ++i) {
+            g[i] = -f[i] * i;
+        }
+        mint ans = (poly(g) * poly(f).inv(tn + 1))[tn];
+        if (tn & 1) {
+            ans = -ans;
+        }
+        std::cout << ans << "\n";
+    } else {
+        int tn = n / 2, tm = m / 2;
+        std::vector<mint> f(tn + 1);
+        f[0] = 1;
+        for (int i = 0; i < tn; ++i) {
+            f[i + 1] = f[i] * (tm + i + 1) * (tm - i);
+        }
+        for (int i = 0; i <= tn; ++i) {
+            f[i] *= ifac[i * 2];
+        }
+        std::vector<mint> g(tn + 1);
+        g[0] = tm;
+        for (int i = 0; i < tn; ++i) {
+            g[i + 1] = g[i] * (tm + i + 1) * (tm - i - 1);
+        }
+        for (int i = 0; i <= tn; ++i) {
+            g[i] *= -ifac[i * 2 + 1];
+        }
+
+        poly res = g * poly(f).inv(tn + 1);
+        res.resize(tn + 1);
+        for (int i = 0; i <= tn; ++i) {
+            if (!(i & 1)) {
+                res[i] = -res[i];
+            }
+        }
+        if (m & 1) {
+            ++res[0];
+        }
+
+        std::vector<mint> tf(n + 1), tg(n + 1);
+        tf[0] = 1;
+        for (int i = 1; i <= n; i += 2) {
+            tf[i] = -res[i / 2];
+            tg[i] = res[i / 2] * i;
+        }
+        std::cout << (poly(tg) * poly(tf).inv(n + 1))[n] << "\n";
+    }
+}
