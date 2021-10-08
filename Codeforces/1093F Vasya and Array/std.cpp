@@ -1,10 +1,4 @@
-#ifndef MYH_MODINT_HPP
-#define MYH_MODINT_HPP 1
-
-#include <iostream>
-#include <type_traits>
-
-namespace myh {
+#include <bits/stdc++.h>
 
 template<unsigned P>
 class modint {
@@ -141,6 +135,45 @@ public:
     }
 };
 
-} // namespace myh
+using mint = modint<998244353>;
 
-#endif // MYH_MODINT_HPP
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int n, m, lim;
+    std::cin >> n >> m >> lim;
+    std::vector<int> a(n);
+    std::vector p(n + 1, std::vector(m, 0));
+    for (int i = 0; i < n; ++i) {
+        std::cin >> a[i];
+        if (a[i] > 0) {
+            --a[i];
+            p[i + 1][a[i]] = p[i][a[i]] + 1;
+        } else {
+            for (int j = 0; j < m; ++j) {
+                p[i + 1][j] = p[i][j] + 1;
+            }
+        }
+    }
+
+    std::vector f(n + 1, std::vector(m, mint(0)));
+    std::vector g(n + 1, mint(0));
+    std::vector sum(m, mint(1));
+    std::vector l(m, 0);
+    g[0] = 1;
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            while (l[j] < i - p[i][j] || l[j] <= i - lim) {
+                sum[j] -= g[l[j]] - f[l[j]][j];
+                ++l[j];
+            }
+            f[i][j] = sum[j];
+            g[i] += f[i][j];
+        }
+        for (int j = 0; j < m; ++j) {
+            sum[j] += g[i] - f[i][j];
+        }
+    }
+    std::cout << g[n] << "\n";
+}
