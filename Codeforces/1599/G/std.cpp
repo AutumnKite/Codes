@@ -43,52 +43,30 @@ int main() {
     a.erase(std::unique(a.begin(), a.end()), a.end());
     n = a.size();
 
-    std::vector<point> tmp;
-    for (int i = 0; i < n - 1; ++i) {
-        point t = a[i + 1] - a[i];
-        int g = std::__gcd(abs(t.x), abs(t.y));
-        t.x /= g, t.y /= g;
-        tmp.push_back(t);
-    }
-    if (n > 1) {
-        point t = a.back() - a.front();
-        int g = std::__gcd(abs(t.x), abs(t.y));
-        t.x /= g, t.y /= g;
-        tmp.push_back(t);
-    }
-    std::sort(tmp.begin(), tmp.end());
-    point v(0, 0);
-    int c = 0;
-    for (int i = 0, j = 0; i < (int)tmp.size(); i = j) {
-        j = i;
-        while (j < (int)tmp.size() && tmp[i] == tmp[j]) {
-            ++j;
-        }
-        if (j - i > c) {
-            c = j - i;
-            v = tmp[i];
-        }
-    }
-    std::vector<bool> vis(n);
-    for (int i = 0; i < n - 1; ++i) {
-        point t = a[i + 1] - a[i];
-        int g = std::__gcd(abs(t.x), abs(t.y));
-        t.x /= g, t.y /= g;
-        if (v == t) {
-            vis[i] = vis[i + 1] = true;
-        }
-    }
     int x = 0;
     for (int i = 0; i < n; ++i) {
-        if (!vis[i]) {
+        std::vector<point> tmp;
+        for (int j = 0; j < n && (int)tmp.size() <= 5; ++j) {
+            if (i != j) {
+                point t = a[i] - a[j];
+                int g = std::__gcd(abs(t.x), abs(t.y));
+                t.x /= g, t.y /= g;
+                if (t.x < 0) {
+                    t.x = -t.x;
+                    t.y = -t.y;
+                }
+                tmp.push_back(t);
+            }
+        }
+        std::sort(tmp.begin(), tmp.end());
+        tmp.erase(std::unique(tmp.begin(), tmp.end()), tmp.end());
+        if ((int)tmp.size() > 2) {
             x = i;
             break;
         }
     }
     point p = a[x];
     a.erase(a.begin() + x);
-
-    std::cerr << p.x << " " << p.y << "\n";
 
     if (a.empty()) {
         std::cout << 0 << "\n";
