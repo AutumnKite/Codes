@@ -8,45 +8,46 @@
 
 namespace myh {
 
-template<typename _Val, typename _VV = std::plus<_Val>>
+template<typename Val, 
+         typename VV = std::plus<Val>>
 class fenwick_tree {
 public:
-    typedef std::size_t size_type;
+  typedef std::size_t size_type;
 
 protected:
-    const _Val E;
+  const Val E;
 
-    size_type n;
-    std::vector<_Val> val;
+  size_type n;
+  std::vector<Val> val;
 
-    _VV fun;
+  VV fun;
 
 public:
-    fenwick_tree() : fenwick_tree(0) {}
+  fenwick_tree() : fenwick_tree(0) {}
 
-    fenwick_tree(size_type _n)
-    : E(), n(_n), val(n + 1, E) {}
+  fenwick_tree(size_type _n)
+  : E(), n(_n), val(n + 1, E) {}
 
-    fenwick_tree(size_type _n, const _Val &_E)
-    : E(_E), n(_n), val(n + 1, E) {}
+  fenwick_tree(size_type _n, const Val &_E)
+  : E(_E), n(_n), val(n + 1, E) {}
 
-    size_type size() const {
-        return n;
+  size_type size() const {
+    return n;
+  }
+
+  void modify(size_type x, const Val &v) {
+    for (++x; x <= n; x += x & -x) {
+      val[x] = fun(val[x], v);
     }
+  }
 
-    void modify(size_type x, const _Val &v) {
-        for (++x; x <= n; x += x & -x) {
-            val[x] = fun(val[x], v);
-        }
+  Val query(size_type x) {
+    Val s = E;
+    for (; x; x ^= x & -x) {
+      s = fun(s, val[x]);
     }
-
-    _Val query(size_type x) {
-        _Val s = E;
-        for (; x; x ^= x & -x) {
-            s = fun(s, val[x]);
-        }
-        return s;
-    }
+    return s;
+  }
 };
 
 } // namespace myh

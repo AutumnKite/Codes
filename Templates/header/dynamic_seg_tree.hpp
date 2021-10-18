@@ -8,27 +8,27 @@
 
 namespace myh {
 
-template<typename _Val, 
-         typename _VV = std::plus<>,
-         typename _Tag = _Val, 
-         typename _VT = std::plus<>>
+template<typename Val, 
+         typename VV = std::plus<>,
+         typename Tag = Val, 
+         typename VT = std::plus<>>
 class dynamic_seg_tree {
 public:
     typedef std::size_t size_type;
 
-    const _Val E;
+    const Val E;
 
 protected:
     const size_type nl, nr;
 
-    _VV fun_vv;
-    _VT fun_vt;
+    VV fun_vv;
+    VT fun_vt;
 
     struct node {
         node *ls, *rs;
-        _Val v;
+        Val v;
 
-        node(_Val _v) : ls(nullptr), rs(nullptr), v(_v) {}
+        node(Val _v) : ls(nullptr), rs(nullptr), v(_v) {}
     };
 
     node *rt;
@@ -39,7 +39,7 @@ protected:
     }
 
     void modify(node *&u, size_type l, size_type r, 
-                size_type x, const _Val &v) {
+                size_type x, const Val &v) {
         if (u == nullptr) {
             u = new node(E);
         }
@@ -57,7 +57,7 @@ protected:
     }
 
     void add(node *&u, size_type l, size_type r, 
-             size_type x, const _Tag &v) {
+             size_type x, const Tag &v) {
         if (u == nullptr) {
             u = new node(E);
         }
@@ -74,7 +74,7 @@ protected:
         up(u);
     }
 
-    _Val query(node *u, size_type l, size_type r, 
+    Val query(node *u, size_type l, size_type r, 
                size_type L, size_type R) const {
         if (u == nullptr) {
             return E;
@@ -97,18 +97,18 @@ public:
     dynamic_seg_tree(size_type _nl, size_type _nr)
     : E(), nl(_nl), nr(_nr), rt(nullptr) {}
 
-    dynamic_seg_tree(size_type _nl, size_type _nr, const _Val &_E)
+    dynamic_seg_tree(size_type _nl, size_type _nr, const Val &_E)
     : E(_E), nl(_nl), nr(_nr), rt(nullptr) {}
 
-    void modify(size_type x, const _Val &v) {
+    void modify(size_type x, const Val &v) {
         modify(rt, nl, nr, x, v);
     }
 
-    void add(size_type x, const _Tag &v) {
+    void add(size_type x, const Tag &v) {
         add(rt, nl, nr, x, v);
     }
 
-    _Val query(size_type l, size_type r) const {
+    Val query(size_type l, size_type r) const {
         if (l < r) {
             return query(rt, nl, nr, l, r);
         } else {
