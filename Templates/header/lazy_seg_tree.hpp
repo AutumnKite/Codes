@@ -8,17 +8,18 @@
 
 namespace myh {
 
-template<typename _Val,
-         typename _VV = std::plus<>,
-         typename _Tag = _Val,
-         typename _VT = std::plus<>,
-         typename _TT = std::plus<>>
+template<typename Val,
+         typename VV = std::plus<>,
+         typename Tag = Val,
+         typename VT = std::plus<>,
+         typename TT = std::plus<>,
+         typename Comp = std::less<>>
 class lazy_seg_tree {
 public:
   typedef std::size_t size_type;
 
 private:
-  static size_type enlarge(size_type n) {
+  constexpr static size_type enlarge(size_type n) {
     size_type res = 1;
     while (res < n) {
       res <<= 1;
@@ -29,18 +30,19 @@ private:
 protected:
   const size_type n, en;
 
-  _VV fun_vv;
-  _VT fun_vt;
-  _TT fun_tt;
+  VV fun_vv;
+  VT fun_vt;
+  TT fun_tt;
+  Comp comp;
 
-  std::vector<_Val> val;
-  std::vector<_Tag> tag;
+  std::vector<Val> val;
+  std::vector<Tag> tag;
 
   void up(size_type u) {
     val[u] = fun_vv(val[u << 1], val[u << 1 | 1]);
   }
 
-  void apply(size_type u, const _Tag &v) {
+  void apply(size_type u, const Tag &v) {
     val[u] = fun_vt(val[u], v);
     tag[u] = fun_tt(tag[u], v);
   }
@@ -48,14 +50,14 @@ protected:
   void down(size_type u) {
     apply(u << 1, tag[u]);
     apply(u << 1 | 1, tag[u]);
-    tag[u] = _Tag();
+    tag[u] = Tag();
   }
 
   template<typename T>
   void build(size_type u, size_type l, size_type r, 
-         const std::vector<T> &a) {
+             const std::vector<T> &a) {
     if (l + 1 == r) {
-      val[u] = _Val(a[l]);
+      val[u] = Val(a[l]);
       return;
     }
     size_type mid = (l + r) >> 1;
@@ -65,7 +67,7 @@ protected:
   }
 
   void modify(size_type u, size_type l, size_type r, 
-        size_type x, const _Val &v) {
+              size_type x, const Val &v) {
     if (l + 1 == r) {
       val[u] = v;
       return;
@@ -81,7 +83,7 @@ protected:
   }
 
   void modify(size_type u, size_type l, size_type r, 
-        size_type L, size_type R, const _Tag &v) {
+              size_type L, size_type R, const Tag &v) {
     if (L <= l && r <= R) {
       apply(u, v);
       return;
@@ -97,8 +99,8 @@ protected:
     up(u);
   }
 
-  _Val query(size_type u, size_type l, size_type r, 
-         size_type L, size_type R) {
+  Val query(size_type u, size_type l, size_type r, 
+            size_type L, size_type R) {
     if (L <= l && r <= R) {
       return val[u];
     }
@@ -110,7 +112,65 @@ protected:
       return query(u << 1 | 1, mid, r, L, R);
     } else {
       return fun_vv(query(u << 1, l, mid, L, R), 
-              query(u << 1 | 1, mid, r, L, R));
+                    query(u << 1 | 1, mid, r, L, R));
+    }
+  }
+
+  size_type lower_bound(size_type u, size_type l, size_type r, 
+                        size_type L, size_type R,
+                        Val &pre, const Val &v) {
+    if (L <= l && r <= R) {
+      const Val &tmp = fun_vv(pre, val[u]);
+      if (comp(tmp, v)) {
+        pre = tmp;
+        return r;
+      }
+    }
+    if (l + 1 == r) {
+      return l;
+    }
+    size_type mid = (l + r) >> 1;
+    down(u);
+    if (R <= mid) {
+      return lower_bound(u << 1, l, mid, L, R, pre, v);
+    } else if (L >= mid) {
+      return lower_bound(u << 1 | 1, mid, r, L, R, pre, v);
+    } else {
+      size_type res = lower_bound(u << 1, l, mid, L, R, pre, v);
+      if (res < mid) {
+        return res;
+      } else {
+        return lower_bound(u << 1 | 1, mid, r, L, R, pre, v);
+      }
+    }
+  }
+
+  size_type upper_bound(size_type u, size_type l, size_type r, 
+                        size_type L, size_type R,
+                        Val &pre, const Val &v) {
+    if (L <= l && r <= R) {
+      const Val &tmp = fun_vv(pre, val[u]);
+      if (!comp(v, tmp)) {
+        pre = tmp;
+        return r;
+      }
+    }
+    if (l + 1 == r) {
+      return l;
+    }
+    size_type mid = (l + r) >> 1;
+    down(u);
+    if (R <= mid) {
+      return upper_bound(u << 1, l, mid, L, R, pre, v);
+    } else if (L >= mid) {
+      return upper_bound(u << 1 | 1, mid, r, L, R, pre, v);
+    } else {
+      size_type res = upper_bound(u << 1, l, mid, L, R, pre, v);
+      if (res < mid) {
+        return res;
+      } else {
+        return upper_bound(u << 1 | 1, mid, r, L, R, pre, v);
+      }
     }
   }
 
@@ -132,22 +192,30 @@ public:
     return n;
   }
 
-  void modify(size_type x, const _Val &v) {
+  void modify(size_type x, const Val &v) {
     modify(1, 0, n, x, v);
   }
 
-  void modify(size_type l, size_type r, const _Tag &v) {
+  void modify(size_type l, size_type r, const Tag &v) {
     if (l < r) {
       modify(1, 0, n, l, r, v);
     }
   }
 
-  _Val query(size_type l, size_type r) {
+  Val query(size_type l, size_type r) {
     if (l < r) {
       return query(1, 0, n, l, r);
     } else {
-      return _Val();
+      return Val();
     }
+  }
+
+  size_type lower_bound(size_type l, size_type r, Val E, const Val &v) {
+    return lower_bound(1, 0, n, l, r, E, v);
+  }
+
+  size_type upper_bound(size_type l, size_type r, Val E, const Val &v) {
+    return upper_bound(1, 0, n, l, r, E, v);
   }
 };
 
