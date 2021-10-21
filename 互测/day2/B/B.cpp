@@ -142,6 +142,12 @@ mint solve_small_k(int n, int k, std::string pre) {
   for (int i = 0; i < (int)pre.size(); ++i) {
     st = st << 1 | (pre[i] - '0');
   }
+
+  std::vector<int> bitcnt(1 << k);
+  for (int S = 1; S < (1 << k); ++S) {
+    bitcnt[S] = bitcnt[S >> 1] + (S & 1);
+  }
+
   int all = (1 << k) - 1;
   std::vector<mint> f(1 << k);
   f[st] = 1;
@@ -151,7 +157,7 @@ mint solve_small_k(int n, int k, std::string pre) {
       if (f[S].val()) {
         for (int v = 0; v < 2; ++v) {
           int T = ((S << 1) & all) | v;
-          if (i < k || __builtin_popcount(T) != (k >> 1)) {
+          if (i < k || bitcnt[T] != (k >> 1)) {
             g[T] += f[S];
           }
         }
@@ -164,34 +170,24 @@ mint solve_small_k(int n, int k, std::string pre) {
 
 mint det(std::vector<std::vector<mint>> a) {
   int n = a.size();
-  mint ans = 1;
-  for (int i = 0; i < n; ++i) {
-    int k = -1;
-    for (int j = i; j < n; ++j) {
-      if (a[j][i].val()) {
-        k = j;
-        break;
-      }
-    }
-    if (k == -1) {
-      return mint();
-    }
-    if (k != i) {
-      a[i].swap(a[k]);
-      ans = -ans;
-    }
-    ans *= a[i][i];
-    mint inv = a[i][i].inv();
-    for (int j = i + 1; j < n; ++j) {
-      if (a[j][i].val()) {
-        mint t = -a[j][i] * inv;
-        for (int k = i; k < n; ++k) {
-          a[j][k] += a[i][k] * t;
+  std::vector<mint> f(1 << n);
+  f[0] = 1;
+  for (int S = 0; S < (1 << n); ++S) {
+    int t = __builtin_popcount(S);
+    int now = t;
+    for (int i = 0; i < n; ++i) {
+      if (!(S >> i & 1)) {
+        if (now & 1) {
+          f[S | (1 << i)] -= f[S] * a[t][i];
+        } else {
+          f[S | (1 << i)] += f[S] * a[t][i];
         }
+      } else {
+        --now;
       }
     }
   }
-  return ans;
+  return f.back();
 }
 
 mint part(int n, int k, std::string pre) {
@@ -202,7 +198,6 @@ mint part(int n, int k, std::string pre) {
   int s = 0;
   for (int i = 0; i < m; ++i) {
     vis[i][s + delta] = true;
-    std::cerr << "(" << i << ", " << s + delta << ")\n";
     s += pre[i] == '1';
     if (s >= k / 2) {
       return mint();
@@ -214,12 +209,10 @@ mint part(int n, int k, std::string pre) {
         continue;
       }
       vis[i][j] = true;
-      std::cerr << "(" << i << ", " << j << ")\n";
     }
   }
   mint ans = 0;
   for (int r = s; r <= (t + 1) * (k / 2 - 1); ++r) {
-    std::cerr << "s = " << s << " r = " << r << "\n";
     auto nvis(vis);
     for (int i = n % k; i <= k; ++i) {
       for (int j = 0; j <= r; ++j) {
@@ -227,7 +220,6 @@ mint part(int n, int k, std::string pre) {
           continue;
         }
         nvis[i][j] = true;
-        std::cerr << "(" << i << ", " << j << ")\n";
       }
     }
     std::vector f(H + 1, std::vector(W + 1, std::vector(H + 1, mint())));
@@ -246,7 +238,6 @@ mint part(int n, int k, std::string pre) {
         }
       }
     }
-    std::cerr << f[1][1][2] << "\n";
     std::vector g(W + 1, std::vector(H + 1, mint()));
     if (!nvis[m][s + delta]) {
       g[m][s + delta] = 1;
@@ -266,10 +257,6 @@ mint part(int n, int k, std::string pre) {
 
     auto dfs = [&](auto &self, int p) -> void {
       if (p > t) {
-        std::cerr << "  sum: ";
-        for (int i = 0; i <= t + 1; ++i) {
-          std::cerr << sum[i] << " \n"[i == t + 1];
-        }
         std::vector A(t + 1, std::vector(t + 1, mint()));
         for (int i = 1; i <= t; ++i) {
           for (int j = 0; j < t; ++j) {
@@ -283,14 +270,7 @@ mint part(int n, int k, std::string pre) {
           A[0][j] = g[k][sum[j + 1] + delta - k / 2 * j];
         }
         A[0][t] = g[n % k][sum[t + 1]];
-        for (int i = 0; i <= t; ++i) {
-          std::cerr << "    ";
-          for (int j = 0; j <= t; ++j) {
-            std::cerr << A[i][j] << " \n"[j == t];
-          }
-        }
         ans += det(A);
-        std::cerr << ans << "\n";
         return;
       }
       for (int i = 0; i < k / 2; ++i) {
@@ -310,7 +290,6 @@ mint part(int n, int k, std::string pre) {
 
 mint solve_large_k(int n, int k, std::string pre) {
   mint ans = part(n, k, pre);
-  return ans;
   for (char &c : pre) {
     if (c == '0') {
       c = '1';
@@ -332,9 +311,9 @@ int main() {
     std::cin >> pre;
   }
 
-  // if (k <= 20) {
-  //   std::cout << solve_small_k(n, k, pre) << "\n";
-  // } else {
+  if (k <= 22) {
+    std::cout << solve_small_k(n, k, pre) << "\n";
+  } else {
     std::cout << solve_large_k(n, k, pre) << "\n";
-  // }
+  }
 }
