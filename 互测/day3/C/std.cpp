@@ -1,3 +1,5 @@
+#pragma GCC optimize(3)
+
 #include <bits/stdc++.h>
 
 template<typename Val, 
@@ -137,8 +139,13 @@ protected:
   node *rt;
 
   void up(node *u) {
-    u->v = (u->ls == nullptr ? state() : u->ls->v)
-         + (u->rs == nullptr ? state() : u->rs->v);
+    if (u->ls == nullptr) {
+      u->v = u->rs->v;
+    } else if (u->rs == nullptr) {
+      u->v = u->ls->v;
+    } else {
+      u->v = u->ls->v + u->rs->v;
+    }
   }
 
   void apply(node *u, long long v) {
@@ -314,14 +321,21 @@ int main() {
     if (x > y) {
       std::swap(x, y);
     }
-    return std::min({T.query(0, x),
-                     T.query(R[x], y),
-                     T.query(R[y], len)});
+    int p = i;
+    while (p < n && ((x <= p0[p] && p0[p] < R[x]) 
+                  || (y <= p0[p] && p0[p] < R[y]))) {
+      ++p;
+    }
+    return p;
+    // return std::min({0 < x ? T.query(0, x) : n,
+    //                  R[x] < y ? T.query(R[x], y) : n,
+    //                  R[y] < len ? T.query(R[y], len) : n});
   };
 
   long long ans = INF;
   std::vector<special_seg_tree> f(n), g(n);
   f[0].insert(p0[0], 0);
+
   for (int i = 0; i < n; ++i) {
     do {
       int t = p0[i];
@@ -329,8 +343,8 @@ int main() {
       if (k >= n) {
         ans = std::min(ans, f[i].query(0, len).v);
       } else {
-        int t0 = p0[k];
-        int t1 = p1[k];
+        int t0 = p1[k];
+        int t1 = p0[k];
         for (int j = t0; j <= t1; ++j) {
           long long v = f[i].query(j, j + 1).v;
           if (v == INF) {
@@ -375,8 +389,8 @@ int main() {
       if (k >= n) {
         ans = std::min(ans, g[i].query(0, len).v);
       } else {
-        int t0 = p0[k];
-        int t1 = p1[k];
+        int t0 = p1[k];
+        int t1 = p0[k];
         for (int j = t0; j <= t1; ++j) {
           long long v = g[i].query(j, j + 1).v;
           if (v == INF) {
