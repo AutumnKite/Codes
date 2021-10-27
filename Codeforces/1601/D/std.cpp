@@ -260,6 +260,8 @@ struct max {
   }
 };
 
+const int INF = std::numeric_limits<int>::max() / 2;
+
 int main() {
   std::ios_base::sync_with_stdio(false);
   std::cin.tie(nullptr);
@@ -308,7 +310,8 @@ int main() {
     }
     int pos = std::upper_bound(v.begin(), v.end(), a[i].first) - v.begin();
     pos = std::min(pos, i);
-    f[i] = std::max(T.query(l, pos) + 1, T.query(pos, i))
+    f[i] = std::max(l < pos ? T.query(l, pos) + 1 : -INF,
+                    pos < i ? T.query(pos, i) : -INF)
            - S.query(n - i + 1);
     T.modify(i, f[i] + S.query(n - i));
   }
