@@ -1,12 +1,4 @@
-#ifndef MYH_MF_NETWORK_HPP
-#define MYH_MF_NETWORK_HPP 1
-
-#include <cstdlib>
-#include <algorithm>
-#include <limits>
-#include <vector>
-
-namespace myh {
+#include <bits/stdc++.h>
 
 template <class Flow>
 class mf_network {
@@ -111,6 +103,29 @@ public:
   }
 };
 
-} // namespace myh
+int main() {
+  std::ios_base::sync_with_stdio(false);
+  std::cin.tie(nullptr);
 
-#endif // MYH_MF_NETWORK_HPP
+  int n, m;
+  std::cin >> n >> m;
+  mf_network<long long> G(n + m + 2);
+  for (int i = 0; i < n; ++i) {
+    int v;
+    std::cin >> v;
+    G.add_edge(n + m, i, v);
+  }
+  long long sum = 0;
+  for (int i = 0; i < m; ++i) {
+    int u, v, w;
+    std::cin >> u >> v >> w;
+    --u, --v;
+    G.add_edge(u, n + i, G.INF_flow);
+    G.add_edge(v, n + i, G.INF_flow);
+    G.add_edge(n + i, n + m + 1, w);
+    sum += w;
+  }
+  long long flow;
+  G.slope(n + m, n + m + 1, flow);
+  std::cout << sum - flow << "\n";
+}

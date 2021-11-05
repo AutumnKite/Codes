@@ -1,12 +1,4 @@
-#ifndef MYH_SEG_TREE_HPP
-#define MYH_SEG_TREE_HPP 1
-
-#include <cstdlib>
-#include <algorithm>
-#include <functional>
-#include <vector>
-
-namespace myh {
+#include <bits/stdc++.h>
 
 template<typename Val, 
          typename VV = std::plus<>,
@@ -184,6 +176,148 @@ public:
   }
 };
 
-} // namespace myh
+class tree {
+  int n;
+  std::vector<int> fa;
+  std::vector<std::vector<int>> E;
+  std::vector<int> size, dep, son, top;
 
-#endif // MYH_SEG_TREE_HPP
+  void dfs1(int u) {
+    size[u] = 1;
+    son[u] = -1;
+    for (int v : E[u]) {
+      dep[v] = dep[u] + 1;
+      dfs1(v);
+      size[u] += size[v];
+      if (son[u] == -1 || size[v] > size[son[u]]) {
+        son[u] = v;
+      }
+    }
+  }
+
+  void dfs2(int u, int tp) {
+    top[u] = tp;
+    if (son[u] != -1) {
+      dfs2(son[u], tp);
+    }
+    for (int v : E[u]) {
+      if (v != son[u]) {
+        dfs2(v, v);
+      }
+    }
+  }
+
+  int LCA(int u, int v) const {
+    while (top[u] != top[v]) {
+      if (dep[top[u]] > dep[top[v]]) {
+        u = fa[top[u]];
+      } else {
+        v = fa[top[v]];
+      }
+    }
+    return dep[u] < dep[v] ? u : v;
+  }
+
+public:
+  tree(std::vector<int> t_fa)
+  : n(t_fa.size()), fa(t_fa), E(n),
+    size(n), dep(n), son(n), top(n) {
+    for (int i = 1; i < n; ++i) {
+      E[fa[i]].push_back(i);
+    }
+    dfs1(0);
+    dfs2(0, 0);
+  }
+
+  int dist(int u, int v) const {
+    return dep[u] + dep[v] - 2 * dep[LCA(u, v)];
+  }
+
+  struct path {
+    int x, y, len;
+    bool is_path;
+
+    path()
+    : x(-1), y(-1), len(-1), is_path(false) {}
+
+    path(int u)
+    : x(u), y(u), len(0), is_path(true) {}
+
+    path(int t_x, int t_y, int t_len, bool t_is_path)
+    : x(t_x), y(t_y), len(t_len), is_path(t_is_path) {}
+
+    bool operator<(const path &rhs) const {
+      return !is_path < !rhs.is_path;
+    }
+  };
+
+  path add(path p, int u) const {
+    if (!p.is_path) {
+      return p;
+    }
+    int lenx = dist(u, p.x), leny = dist(u, p.y);
+    if (lenx + leny == p.len) {
+      return p;
+    } else if (lenx + p.len == leny) {
+      return path(u, p.y, leny, true);
+    } else if (leny + p.len == lenx) {
+      return path(u, p.x, lenx, true);
+    } else {
+      return path();
+    }
+  }
+
+  path add(path p, path q) const {
+    if (!p.is_path || !q.is_path) {
+      return path();
+    } else {
+      return add(add(p, q.x), q.y);
+    }
+  }
+};
+
+int main() {
+  std::ios_base::sync_with_stdio(false);
+  std::cin.tie(nullptr);
+
+  int n;
+  std::cin >> n;
+  std::vector<int> p(n);
+  for (int i = 0; i < n; ++i) {
+    std::cin >> p[i];
+  }
+  std::vector<int> fa(n, -1);
+  for (int i = 1; i < n; ++i) {
+    std::cin >> fa[i];
+    --fa[i];
+  }
+
+  tree T(fa);
+  std::vector<int> id(n);
+  for (int i = 0; i < n; ++i) {
+    id[p[i]] = i;
+  }
+  seg_tree<tree::path, 
+           std::function<tree::path(tree::path, tree::path)>>
+  S(id.begin(), id.end(), [&](const tree::path &a, const tree::path &b) {
+    return T.add(a, b);
+  });
+  int q;
+  std::cin >> q;
+  while (q--) {
+    int op;
+    std::cin >> op;
+    if (op == 1) {
+      int x, y;
+      std::cin >> x >> y;
+      --x, --y;
+      S.modify(p[x], y);
+      S.modify(p[y], x);
+      std::swap(p[x], p[y]);
+      std::swap(id[p[x]], id[p[y]]);
+    } else {
+      std::cout << S.upper_bound(0, n, tree::path(id[0]), tree::path(id[0]))
+                << "\n";
+    }
+  }
+}
