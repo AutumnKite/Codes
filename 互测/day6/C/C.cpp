@@ -17,68 +17,37 @@ int main() {
     std::cin >> t[i] >> x[i];
   }
 
-  std::vector<long long> v(x);
-  std::sort(v.begin(), v.end());
-  v.erase(std::unique(v.begin(), v.end()), v.end());
-
-  std::vector<int> p(n + 1);
-  for (int i = 0; i <= n; ++i) {
-    p[i] = std::lower_bound(v.begin(), v.end(), x[i]) - v.begin();
-  }
-
   std::vector<long long> g(n + 1, INF);
-  std::vector<std::vector<bool>> f(n + 1, std::vector<bool>(v.size()));
+  std::vector<std::vector<bool>> f(n + 1, std::vector<bool>(n + 1));
   g[0] = 0;
   for (int i = 0; i < n; ++i) {
     if (t[i] + std::abs(x[i] - x[i + 1]) <= t[i + 1]) {
-      for (int j = 0; j < (int)v.size(); ++j) {
+      for (int j = i + 2; j <= n; ++j) {
         if (f[i][j]) {
           f[i + 1][j] = true;
         }
       }
     }
     if (g[i] <= t[i]) {
-      int k = i + 1;
-      while (k <= n && x[k] == x[i]) {
-        ++k;
-      }
-      if (k > n) {
-        std::cout << "YES\n";
-        return 0;
-      }
-      upd(g[k], std::max(g[i] + std::abs(x[i] - x[k]), t[k - 1]));
-      if (std::max(g[i] + std::abs(x[i] - x[k]), t[k - 1]) <= t[k]) {
-        f[k][p[i]] = true;
-      }
-      for (int j = 0; j < (int)v.size(); ++j) {
-        if (std::max(g[i] + std::abs(v[j] - x[i]), t[k - 1])
-            + std::abs(v[j] - x[k]) <= t[k]) {
-          f[k][j] = true;
+      upd(g[i + 1], std::max(g[i] + std::abs(x[i] - x[i + 1]), t[i]));
+      for (int j = i + 2; j <= n; ++j) {
+        if (std::max(g[i] + std::abs(x[j] - x[i]), t[i])
+            + std::abs(x[j] - x[i + 1]) <= t[i + 1]) {
+          f[i + 1][j] = true;
         }
       }
     }
-    if (f[i][p[i + 1]]) {
-      int k = i + 2;
-      while (k <= n && x[k] == x[i + 1]) {
-        ++k;
-      }
-      if (k > n) {
-        std::cout << "YES\n";
-        return 0;
-      }
-      upd(g[k], std::max(t[i] + std::abs(x[i] - x[k]), t[k - 1]));
-      if (std::max(t[i] + std::abs(x[i] - x[k]), t[k - 1]) <= t[k]) {
-        f[k][p[i + 1]] = true;
-      }
-      for (int j = 0; j < (int)v.size(); ++j) {
-        if (std::max(t[i] + std::abs(v[j] - x[i]), t[k - 1])
-            + abs(v[j] - x[k]) <= t[k]) {
-          f[k][j] = true;
+    if (f[i][i + 1] && i + 2 <= n) {
+      upd(g[i + 2], std::max(t[i] + std::abs(x[i] - x[i + 2]), t[i + 1]));
+      for (int j = i + 3; j <= n; ++j) {
+        if (std::max(t[i] + std::abs(x[j] - x[i]), t[i + 1])
+            + abs(x[j] - x[i + 2]) <= t[i + 2]) {
+          f[i + 2][j] = true;
         }
       }
     }
   }
-  if (g[n] <= t[n]) {
+  if (g[n] <= t[n] || f[n - 1][n]) {
     std::cout << "YES\n";
   } else {
     std::cout << "NO\n";
