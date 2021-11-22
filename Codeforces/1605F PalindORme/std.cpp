@@ -171,20 +171,13 @@ int main() {
       f[i][j] = mint(2).pow(i * j);
       for (int di = 1; di <= i; ++di) {
         mint c = 1, now = mint(2).pow(di) - 1, pw = mint(2).pow(i - di);
-        for (int dj = 1; dj <= j; ++dj) {
+        for (int dj = 0; dj <= j; ++dj) {
+          f[i][j] -= f[i - di][j - dj] * C[i][di] * C[j][dj] * c;
           c *= now--;
           c *= pw;
-          if ((j - dj) & 1) {
-            f[i][j] -= f[i - di][j - dj - 1] * C[i][di] * C[j][dj] * c
-                       * (j - dj) * pw;
-          } else if (dj > 1) {
-            f[i][j] -= f[i - di][j - dj] * C[i][di] * C[j][dj] * c;
-          }
         }
       }
-      for (int di = 1; di <= i; ++di) {
-        f[i][j] -= f[i - di][j] * C[i][di];
-      }
+      std::cerr << f[i][j] << " \n"[j == n];
     }
   }
   mint ans = 0;
