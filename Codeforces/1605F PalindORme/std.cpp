@@ -177,12 +177,18 @@ int main() {
           c *= pw;
         }
       }
-      std::cerr << f[i][j] << " \n"[j == n];
     }
   }
-  mint ans = 0;
-  for (int i = 0; i <= k; ++i) {
-    ans += C[k][i] * f[i][n];
+  mint ans = mint(2).pow(n * k);
+  for (int di = 1; di <= k; ++di) {
+    mint c = 1, now = mint(2).pow(di) - 1, pw = mint(2).pow(k - di);
+    for (int dj = 0; dj <= n; ++dj) {
+      if (dj > (n & 1)) {
+        ans -= f[k - di][n - dj] * C[k][di] * C[n][dj] * c;
+      }
+      c *= now--;
+      c *= pw;
+    }
   }
   std::cout << ans << "\n";
 }
