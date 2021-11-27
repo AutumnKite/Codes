@@ -3,6 +3,8 @@
 template<typename Tp, typename Comp>
 class geometry {
 public:
+  static constexpr Tp pi = 3.14159265358979324;
+
   static int sgn(const Tp &a, const Tp &b = Tp()) {
     static Comp cmp;
     return cmp(a, b) ? -1 : (cmp(b, a) ? 1 : 0);
@@ -286,6 +288,10 @@ public:
     circle(const point &t_o, const Tp &t_r) : o(t_o), r(t_r) {}
   };
 
+  static int circle_point_relation(const circle &a, const point &p) {
+    return sgn(distance2(a.o, p), a.r * a.r);
+  }
+
   static std::vector<point> circle_cross(const circle &a, const circle &b) {
     Tp d = distance(a.o, b.o);
     if (sgn(d, a.r + b.r) > 0 || sgn(d, std::abs(a.r - b.r)) < 0 || !sgn(d)) {
@@ -329,5 +335,49 @@ int main() {
 
   int n, R;
   std::cin >> n >> R;
-  std::vector<geo::point> 
+  std::vector<geo::point> a(n);
+  for (int i = 0; i < n; ++i) {
+    std::cin >> a[i].x >> a[i].y;
+  }
+
+  std::vector<std::vector<bool>> ok(n, std::vector<bool>(n, true));
+  for (int i = 0; i < n; ++i) {
+    double l1 = -geo::pi, r1 = geo::pi;
+    double l2 = geo::pi, r2 = -geo::pi;
+    for (int j = 0; j < n; ++j) {
+      geo::circle c(a[j], R);
+      auto p = geo::circle_tangent(c, a[i]);
+      if (p.size() <= 1) {
+        continue;
+      }
+      if (geo::sgn(geo::cross(p[0] - a[i], p[1] - a[i])) < 0) {
+        std::swap(p[0], p[1]);
+      }
+      double l = (p[0] - a[i]).angle();
+      double r = (p[1] - a[i]).angle();
+      if (r < l) {
+        l2 = std::min(l2, r);
+        r2 = std::max(r2, l);
+      } else {
+        l1 = std::max(l1, l);
+        r1 = std::min(r1, r);
+      }
+    }
+    for (int j = 0; j < n; ++j) {
+      if (i != j) {
+        double d = (a[j] - a[i]).angle();
+        if (geo::sgn(d - l1) < 0 || geo::sgn(d - r1) > 0 ||
+           (geo::sgn(d - l2) > 0 && geo::sgn(d - r2) < 0)) {
+          ok[i][j] = ok[j][i] = false;
+        }
+      }
+    }
+  }
+  int ans = 0;
+  for (int i = 0; i < n; ++i) {
+    for (int j = i + 1; j < n; ++j) {
+      ans += ok[i][j];
+    }
+  }
+  std::cout << ans << "\n";
 }
