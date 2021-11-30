@@ -138,41 +138,56 @@ public:
 using mint = modint<998244353>;
 
 class tree {
-  int n;
+  int n, lg;
+  std::vector<int> Lg;
   std::vector<std::vector<int>> E;
-  std::vector<int> fa, dep, size, son, top, dfn, nd;
+  std::vector<int> fa, dep, len, son, top;
+  std::vector<std::vector<int>> up, down;
+  std::vector<std::vector<int>> anc;
 
   void dfs1(int u) {
-    size[u] = 1;
+    anc[u][0] = fa[u];
+    for (int i = 1; i < lg && anc[u][i - 1] != -1; ++i) {
+      anc[u][i] = anc[anc[u][i - 1]][i - 1];
+    }
     son[u] = -1;
     for (int v : E[u]) {
       fa[v] = u;
       dep[v] = dep[u] + 1;
       dfs1(v);
-      size[u] += size[v];
-      if (son[u] == -1 || size[v] > size[son[u]]) {
+      if (son[u] == -1 || len[v] > len[son[u]]) {
         son[u] = v;
       }
     }
+    len[u] = son[u] == -1 ? 0 : len[son[u]] + 1;
   }
 
   void dfs2(int u, int tp) {
-    dfn[u] = nd.size();
-    nd.push_back(u);
+    down[tp].push_back(u);
     top[u] = tp;
-    if (son[u] == -1) {
+    if (son[u] != -1) {
       dfs2(son[u], tp);
     }
     for (int v : E[u]) {
       if (v != son[u]) {
         dfs2(v, v);
+        up[v].reserve(len[v]);
+        for (int i = 0, x = u; i < len[v] && x != -1; x = fa[x], ++i) {
+          up[v].push_back(x);
+        }
       }
     }
   }
 
 public:
   tree(std::vector<int> t_fa)
-  : n(t_fa.size()), E(n), fa(t_fa), dep(n), size(n), son(n), top(n), dfn(n) {
+  : n(t_fa.size()), lg(std::__lg(n) + 1), Lg(n + 1), E(n),
+    fa(t_fa), dep(n), len(n), son(n), top(n), up(n), down(n),
+    anc(n, std::vector<int>(lg, -1)) {
+    Lg[1] = 0;
+    for (int i = 2; i < n; ++i) {
+      Lg[i] = Lg[i >> 1] + 1;
+    }
     for (int i = 1; i < n; ++i) {
       E[fa[i]].push_back(i);
     }
@@ -185,14 +200,16 @@ public:
   }
 
   int query(int u, int k) const {
-    int st = dep[u];
-    while (st - dep[u] < k) {
-      if (st - dep[top[u]] >= k) {
-        return nd[dfn[u] - (k - (st - dep[u]))];
-      }
-      u = fa[top[u]];
+    if (k == 0) {
+      return u;
     }
-    return u;
+    u = anc[u][Lg[k]];
+    k ^= 1 << Lg[k];
+    if (dep[u] - dep[top[u]] >= k) {
+      return down[top[u]][dep[u] - dep[top[u]] - k];
+    } else {
+      return up[top[u]][k - (dep[u] - dep[top[u]]) - 1];
+    }
   }
 };
 
@@ -218,7 +235,7 @@ int main() {
 
   tree T(fa);
 
-  int B = sqrt(n) + 1, C = (n - 1) / B + 1;
+  int B = 1.2 * sqrt(n) + 1, C = (n - 1) / B + 1;
   std::vector<std::vector<mint>> sum(C), pre(C);
   for (int k = 0; k < C; ++k) {
     sum[k].resize(k * B);
@@ -234,6 +251,8 @@ int main() {
     }
   }
 
+  std::vector<mint> dv(n);
+  std::vector<int> tmp;
   int last = 0;
   while (q--) {
     int l, r;
@@ -242,14 +261,26 @@ int main() {
     --l, --r;
     int x = r;
     r = std::min(r, p[l]);
-    mint ans = pre[x / B][std::min(r + 1, x / B * B)]
-             - pre[x / B][std::min(l, x / B * B)];
-    for (int i = std::max(l, x / B * B); i <= x; ++i) {
+    int bel = x / B, bound = bel * B;
+    mint ans = pre[bel][std::min(r + 1, bound)]
+             - pre[bel][std::min(l, bound)];
+    for (int i = std::max(l, bound); i <= x; ++i) {
       int d = T.depth(i) - T.depth(l);
       int u = !d ? i : T.query(i, d - 1);
       if (fa[u] >= l) {
         u = fa[u];
       }
+      dv[u] += a[i];
+      tmp.push_back(u);
     }
+    for (int x : tmp) {
+      if (dv[x].val()) {
+        ans += (x < bound ? sum[bel][x] + sum[bel][x] + dv[x] : dv[x]) * dv[x];
+        dv[x] = mint();
+      }
+    }
+    tmp.clear();
+    std::cout << ans << "\n";
+    last = ans.val();
   }
 }
