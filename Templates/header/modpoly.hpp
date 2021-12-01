@@ -25,8 +25,8 @@ constexpr unsigned primitive_root(unsigned n) {
     return 3;
   }
   unsigned x = n - 1;
-  int cnt = 0;
-  int div[20] = {};
+  unsigned cnt = 0;
+  unsigned div[20] = {};
   for (unsigned i = 2; i <= x / i; ++i) {
     if (x % i == 0) {
       div[cnt++] = i;
@@ -38,10 +38,10 @@ constexpr unsigned primitive_root(unsigned n) {
   if (x > 1) {
     div[cnt++] = x;
   }
-  int g = 1;
+  unsigned g = 1;
   while (1) {
     bool ok = true;
-    for (int i = 0; i < cnt; ++i) {
+    for (unsigned i = 0; i < cnt; ++i) {
       if (pow_mod_constexpr(g, (n - 1) / div[i], n) == 1) {
         ok = false;
         break;
