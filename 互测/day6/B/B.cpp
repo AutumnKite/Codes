@@ -1,96 +1,195 @@
 #include <bits/stdc++.h>
 
-std::mt19937 rnd(time(0));
+std::mt19937 rnd(std::chrono::system_clock::
+                 now().time_since_epoch().count());
 
-int main() {
-  int test, lim, cnt;
-  std::cin >> test >> lim >> cnt;
+class bitset {
+  std::vector<unsigned long long> a;
 
-  std::string name = "friends" + std::to_string(test);
-  freopen((name + ".in").c_str(), "r", stdin);
-  freopen((name + ".out").c_str(), "w", stdout);
+public:
+  bitset(std::size_t n) : a((n + 63) / 64) {}
 
-  std::ios_base::sync_with_stdio(false);
-  std::cin.tie(nullptr);
-
-  int n, m;
-  std::cin >> n >> m;
-  std::vector<std::vector<bool>> E(n, std::vector<bool>(n));
-  for (int i = 0; i < m; ++i) {
-    int u, v;
-    std::cin >> u >> v;
-    --u, --v;
-    E[u][v] = E[v][u] = true;
+  bitset &operator&=(const bitset &rhs) {
+    for (std::size_t i = 0; i < a.size(); ++i) {
+      a[i] &= rhs.a[i];
+    }
+    return *this;
   }
 
-  auto G(E);
+  void set() {
+    for (std::size_t i = 0; i < a.size(); ++i) {
+      a[i] = ~0ull;
+    }
+  }
 
-  int rem = m;
+  void set(std::size_t x) {
+    a[x >> 6] |= 1ull << (x & 63);
+  }
 
-  auto find = [&]() {
-    std::vector<int> p(n);
-    std::iota(p.begin(), p.end(), 0);
-    std::vector<int> res;
-    int max = 0;
-    for (int i = 1; i <= lim; ++i) {
-      std::shuffle(p.begin(), p.end(), rnd);
-      std::vector<bool> vis(n);
-      std::vector<int> now;
-      int s = 0;
-      int id = 0;
-      for (int u : p) {
-        ++id;
-        if (id > cnt) {
-          break;
+  bool get(std::size_t x) {
+    return a[x >> 6] & (1ull << (x & 63));
+  }
+};
+
+int main() {
+  int test, old, lim;
+  std::cin >> test >> old >> lim;
+
+  std::string name = "friends" + std::to_string(test);
+  std::ifstream input(name + ".in");
+
+  int n, m;
+  input >> n >> m;
+  std::vector<std::vector<int>> E(n, std::vector<int>(n));
+  std::vector<bitset> adj(n, bitset(n));
+  std::vector<std::vector<int>> A;
+  for (int i = 0; i < m; ++i) {
+    int u, v;
+    input >> u >> v;
+    --u, --v;
+    E[u][v] = E[v][u] = 1;
+    adj[u].set(v);
+    adj[v].set(u);
+    if (!old) {
+      A.push_back({u, v});
+    }
+  }
+
+  if (old) {
+    std::ifstream old_out(name + ".out");
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
+        E[i][j] = 0;
+      }
+    }
+    int c;
+    old_out >> c;
+    A.resize(c);
+    for (int i = 0; i < c; ++i) {
+      int k;
+      old_out >> k;
+      A[i].resize(k);
+      for (int &x : A[i]) {
+        old_out >> x;
+        --x;
+      }
+      for (int x : A[i]) {
+        for (int y : A[i]) {
+          if (x != y) {
+            ++E[x][y];
+          }
         }
-        bool flag = true;
-        for (int v : now) {
-          if (!E[u][v]) {
-            flag = false;
+      }
+    }
+  }
+
+  std::vector<int> p;
+  for (int test = 1; test <= lim; ++test) {
+    if (rnd() & 1) {
+      std::shuffle(A.begin(), A.end(), rnd);
+    } else {
+      std::sort(A.begin(), A.end(), [&](const auto &a, const auto &b) {
+        return a.size() < b.size();
+      });
+    }
+    for (auto &C : A) {
+      bitset S(n);
+      S.set();
+      for (int x : C) {
+        S &= adj[x];
+      }
+      for (int i = 0; i < n; ++i) {
+        if (S.get(i)) {
+          p.push_back(i);
+        }
+      }
+      std::shuffle(p.begin(), p.end(), rnd);
+      for (int x : p) {
+        if (S.get(x)) {
+          for (int y : C) {
+            ++E[x][y], ++E[y][x];
+          }
+          C.push_back(x);
+          S &= adj[x];
+        }
+      }
+      p.clear();
+    }
+    if (rnd() & 1) {
+      std::shuffle(A.begin(), A.end(), rnd);
+    } else {
+      std::sort(A.begin(), A.end(), [&](const auto &a, const auto &b) {
+        return a.size() < b.size();
+      });
+    }
+    std::vector<std::vector<int>> B;
+    for (auto &C : A) {
+      bool ok = true;
+      for (int x : C) {
+        for (int y : C) {
+          if (x != y && E[x][y] == 1) {
+            ok = false;
             break;
           }
         }
-        if (!flag) {
-          continue;
-        }
-        int t = 0;
-        for (int v : now) {
-          t += G[u][v];
-        }
-        if (now.empty() || t) {
-          s += t;
-          now.push_back(u);
+        if (!ok) {
+          break;
         }
       }
-      if (s > max) {
-        max = s;
-        res = std::move(now);
+      if (!ok) {
+        B.emplace_back(std::move(C));
+      } else {
+        for (int x : C) {
+          for (int y : C) {
+            if (x != y) {
+              --E[x][y];
+            }
+          }
+        }
       }
     }
-    rem -= max;
-    for (int u : res) {
-      for (int v : res) {
-        G[u][v] = false;
+    A.swap(B);
+    for (auto &C : A) {
+      std::shuffle(C.begin(), C.end(), rnd);
+      std::vector<bool> vis(C.size());
+      for (std::size_t i = 0; i < C.size(); ++i) {
+        bool ok = true;
+        for (std::size_t j = 0; j < C.size(); ++j) {
+          if (!vis[j] && i != j && E[C[i]][C[j]] == 1) {
+            ok = false;
+            break;
+          }
+        }
+        if (ok) {
+          vis[i] = true;
+          for (std::size_t j = 0; j < C.size(); ++j) {
+            if (!vis[j] && i != j) {
+              --E[C[i]][C[j]];
+              --E[C[j]][C[i]];
+            }
+          }
+        }
       }
+      std::vector<int> tmp;
+      for (std::size_t i = 0; i < C.size(); ++i) {
+        if (!vis[i]) {
+          tmp.push_back(C[i]);
+        }
+      }
+      C.swap(tmp);
     }
-    return res;
-  };
-
-  std::vector<std::vector<int>> ans;
-  while (rem) {
-    auto tmp = find();
-    if (!tmp.empty()) {
-      ans.push_back(tmp);
+    if (test % 1000 == 0) {
+      std::cerr << test << " " << A.size() << "\n";
     }
-    std::cerr << rem << "\n";
   }
 
-  std::cout << ans.size() << "\n";
-  for (auto p : ans) {
-    std::cout << p.size();
-    for (int x : p) {
-      std::cout << " " << x + 1;
+  std::ofstream output(name + ".out");
+  output << A.size() << "\n";
+  for (const auto &C : A) {
+    output << C.size();
+    for (int x : C) {
+      output << " " << x + 1;
     }
-    std::cout << "\n";
+    output << "\n";
   }
 }
