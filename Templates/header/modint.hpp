@@ -16,14 +16,14 @@ protected:
   unsigned v;
 
 public:
-  modint() : v() {}
+  constexpr modint() : v() {}
 
   template<typename T, 
            typename std::enable_if<
                     std::is_signed<T>::value
                     && std::is_integral<T>::value,
                     bool>::type = true>
-  modint(T _v) {
+  constexpr modint(T _v) : v() {
     long long tmp = _v % static_cast<long long>(P);
     if (tmp < 0) {
       tmp += P;
@@ -36,11 +36,11 @@ public:
                     std::is_unsigned<T>::value
                     && std::is_integral<T>::value,
                     bool>::type = true>
-  modint(T _v) {
+  constexpr modint(T _v) : v() {
     v = _v % P;
   }
 
-  unsigned val() const {
+  constexpr unsigned val() const {
     return v;
   }
 
@@ -48,56 +48,56 @@ public:
     return P;
   }
 
-  static mint raw(unsigned v) {
+  static constexpr mint raw(unsigned v) {
     mint res;
     res.v = v;
     return res;
   }
 
-  mint &operator+=(const mint &rhs) {
+  constexpr mint &operator+=(const mint &rhs) {
     v < P - rhs.v ? v += rhs.v : v -= P - rhs.v;
     return *this;
   }
 
-  mint &operator++() {
+  constexpr mint &operator++() {
     v + 1 < P ? ++v : v = 0;
     return *this;
   }
 
-  mint operator++(int) {
+  constexpr mint operator++(int) {
     mint tmp = *this;
     v + 1 < P ? ++v : v = 0;
     return tmp;
   }
 
-  mint &operator-=(const mint &rhs) {
+  constexpr mint &operator-=(const mint &rhs) {
     v < rhs.v ? v += P - rhs.v : v -= rhs.v;
     return *this;
   }
 
-  mint &operator--() {
+  constexpr mint &operator--() {
     v == 0 ? v = P - 1 : --v;
     return *this;
   }
 
-  mint operator--(int) {
+  constexpr mint operator--(int) {
     mint tmp = *this;
     v == 0 ? v = P - 1 : --v;
     return tmp;
   }
 
-  mint operator-() const {
+  constexpr mint operator-() const {
     mint res;
     res.v = v == 0 ? 0 : P - v;
     return res;
   }
 
-  mint &operator*=(const mint &rhs) {
+  constexpr mint &operator*=(const mint &rhs) {
     v = static_cast<unsigned long long>(v) * rhs.v % P;
     return *this;
   }
 
-  mint pow(unsigned long long b) const {
+  constexpr mint pow(unsigned long long b) const {
     mint a(*this), s(1);
     for (; b; b >>= 1) {
       if (b & 1) {
@@ -108,27 +108,27 @@ public:
     return s;
   }
 
-  mint inv() const {
+  constexpr mint inv() const {
     return pow(P - 2);
   }
 
-  friend mint operator+(const mint &lhs, const mint &rhs) {
+  constexpr friend mint operator+(const mint &lhs, const mint &rhs) {
     return mint(lhs) += rhs;
   }
 
-  friend mint operator-(const mint &lhs, const mint &rhs) {
+  constexpr friend mint operator-(const mint &lhs, const mint &rhs) {
     return mint(lhs) -= rhs;
   }
 
-  friend mint operator*(const mint &lhs, const mint &rhs) {
+  constexpr friend mint operator*(const mint &lhs, const mint &rhs) {
     return mint(lhs) *= rhs;
   }
 
-  friend bool operator==(const mint &lhs, const mint &rhs) {
+  constexpr friend bool operator==(const mint &lhs, const mint &rhs) {
     return lhs.v == rhs.v;
   }
 
-  friend bool operator!=(const mint &lhs, const mint &rhs) {
+  constexpr friend bool operator!=(const mint &lhs, const mint &rhs) {
     return lhs.v != rhs.v;
   }
 
