@@ -202,57 +202,99 @@ int main() {
     }
   }
 
-  std::vector<std::vector<mint>> g(n + 1, std::vector<mint>(n + 1));
+  std::vector<std::vector<int>> id(n + 1, std::vector<int>(n + 1, -1));
+  int tot = 0;
+  for (int i = 0; i <= n; ++i) {
+    for (int j = 0; i + j <= n; ++j) {
+      id[i][j] = tot++;
+    }
+  }
+
+  std::vector<mint> f(tot);
   for (int i = 0; i < m; ++i) {
     int a, b;
     std::cin >> a >> b;
-    g[a][b] += C[n][a] * C[n - a][b];
+    ++f[id[a][b]];
   }
-  std::vector<std::vector<mint>> f(n + 1, std::vector<mint>(n + 1));
-  f[0][0] = 1;
 
-  auto calc = [&](mint w) {
-    std::vector<std::vector<std::vector<mint>>>
-    f(n + 1, std::vector<std::vector<mint>>(n + 1, std::vector<mint>(n + 1)));
-    f[0][0][0] = 1;
-    for (int i = 1; i <= n; ++i) {
-      f[i] = f[i - 1];
-      for (int x = 1; x <= n; ++x) {
-        for (int y = 0; y <= n; ++y) {
-          f[i][x][y] += f[i - 1][x - 1][y] * w;
+  auto mul = [&](std::vector<mint> &f, mint w) {
+    mint w2 = w * w;
+    for (int x = n; x >= 0; --x) {
+      for (int y = n - x; y >= 0; --y) {
+        if (x) {
+          f[id[x][y]] += w * f[id[x - 1][y]];
         }
-      }
-      for (int x = 0; x <= n; ++x) {
-        for (int y = 1; y <= n; ++y) {
-          f[i][x][y] += f[i - 1][x][y - 1] * w;
+        if (y) {
+          f[id[x][y]] += w2 * f[id[x][y - 1]];
         }
       }
     }
-    return f;
+    for (int x = 0; x <= n; ++x) {
+      for (int y = 0; x + y <= n; ++y) {
+        if (x) {
+          f[id[x][y]] -= f[id[x - 1][y]];
+        }
+        if (y) {
+          f[id[x][y]] -= f[id[x][y - 1]];
+        }
+      }
+    }
   };
 
-  std::array pw = {calc(1), calc(omega), calc(omega * omega)};
-  
-  auto FWT = [&](const auto &f) {
-    std::vector<std::vector<mint>> res(n + 1, std::vector<mint>(n + 1));
-    for (int i = 0; i <= n; ++i) {
-      for (int j = 0; i + j <= n; ++j) {
-        for (int x = 0; x <= n; ++x) {
-          for (int y = 0; x + y <= n; ++y) {
-            res[i][j] += f[x][y] * (pw[0][n - i - j][x][y]
-                                    + pw[1][i][x][y]
-                                    + pw[2][j][x][y]);
-          }
+  std::vector<std::vector<mint>> H(tot, std::vector<mint>(tot));
+  for (int x = 0; x <= n; ++x) {
+    for (int y = 0; x + y <= n; ++y) {
+      H[id[0][0]][id[x][y]] = C[n][x] * C[n - x][y];
+    }
+  }
+  for (int i = 1; i <= n; ++i) {
+    H[id[i][0]] = H[id[i - 1][0]];
+    mul(H[id[i][0]], omega);
+  }
+  for (int i = 0; i <= n; ++i) {
+    for (int j = 1; i + j <= n; ++j) {
+      H[id[i][j]] = H[id[i][j - 1]];
+      mul(H[id[i][j]], omega * omega);
+    }
+  }
+
+  auto FWT = [&](const std::vector<mint> &f) {
+    std::vector<mint> res(tot);
+    for (int i = 0; i < tot; ++i) {
+      for (int x = 0; x <= n; ++x) {
+        for (int y = 0; x + y <= n; ++y) {
+          res[i] += f[id[x][y]] * H[i][id[x][y]];
         }
       }
     }
     return res;
   };
 
-  f = FWT(f), g = FWT(g);
+  f = FWT(f);
+
+  for (int i = 0; i < tot; ++i) {
+    f[i] = f[i].pow(k);
+  }
+
+  auto IFWT = [&](const std::vector<mint> &f) {
+    std::vector<mint> res(tot);
+    for (int i = 0; i < tot; ++i) {
+      for (int x = 0; x <= n; ++x) {
+        for (int y = 0; x + y <= n; ++y) {
+          res[i] += f[id[x][y]] * H[i][id[y][x]];
+        }
+      }
+    }
+    return res;
+  };
+
+  f = IFWT(f);
+
+  mint inv = mint(3).pow(n).inv();
   for (int i = 0; i <= n; ++i) {
     for (int j = 0; i + j <= n; ++j) {
-      f[i][j] *= g[i][j].pow(k);
+      std::cout << f[id[i][j]] * C[n][i] * C[n - i][j] * inv;
+      std::cout << " \n"[i + j == n];
     }
   }
 }
