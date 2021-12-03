@@ -1,209 +1,220 @@
 #include <bits/stdc++.h>
 
-class LinkCutTree {
-	struct Sons {
-		int ls, rs;
+template<typename Val, typename VV = std::plus<Val>>
+class dynamic_tree {
+public:
+  typedef std::size_t size_type;
 
-		Sons() : ls(-1), rs(-1) {}
-		
-		int &operator[](int x) {
-			if (x == 0) {
-				return ls;
-			} else {
-				return rs;
-			}
-		}
+protected:
+  VV fun;
 
-		const int &operator[](int x) const {
-			if (x == 0) {
-				return ls;
-			} else {
-				return rs;
-			}
-		}
-	};
+  struct node {
+    node *fa, *ls, *rs;
+    Val v, sv;
+    bool rev;
 
-	int n;
-	std::vector<int> fa;
-	std::vector<Sons> son;
-	std::vector<bool> rev;
+    node() : fa(), ls(), rs(), v(), sv(), rev() {}
 
-	std::vector<int> a, val;
+    node(const Val &t_v) : fa(), ls(), rs(), v(t_v), sv(v), rev() {}
 
-	void up(int u) {
-		val[u] = a[u];
-		if (son[u][0] != -1) {
-			val[u] ^= val[son[u][0]];
-		}
-		if (son[u][1] != -1) {
-			val[u] ^= val[son[u][1]];
-		}
-	}
+    node *&son(bool d) {
+      if (!d) {
+        return ls;
+      } else {
+        return rs;
+      }
+    }
 
-	void reverse(int u) {
-		if (u != -1) {
-			std::swap(son[u][0], son[u][1]);
-			rev[u] = !rev[u];
-		}
-	}
+    bool is_root() const {
+      return !fa || (fa->ls != this && fa->rs != this);
+    }
 
-	void down(int u) {
-		if (rev[u]) {
-			reverse(son[u][0]);
-			reverse(son[u][1]);
-			rev[u] = false;
-		}
-	}
+    bool which() const {
+      return fa->rs == this;
+    }
 
-	bool is_root(int u) {
-		return fa[u] == -1 || (son[fa[u]][0] != u && son[fa[u]][1] != u);
-	}
+    void change(bool d, node *v) {
+      if (v) {
+        v->fa = this;
+      }
+      son(d) = v;
+    }
+  };
 
-	int dir(int u) {
-		return son[fa[u]][1] == u;
-	}
+  std::vector<node *> nd;
 
-	void change(int u, int k, int v) {
-		if (v != -1) {
-			fa[v] = u;
-		}
-		son[u][k] = v;
-	}
+  void up(node *u) {
+    u->sv = u->v;
+    if (u->ls) {
+      u->sv = fun(u->sv, u->ls->sv);
+    }
+    if (u->rs) {
+      u->sv = fun(u->sv, u->rs->sv);
+    }
+  }
 
-	void rotate(int u) {
-		int v = fa[u], k = dir(u);
-		change(v, k, son[u][k ^ 1]);
-		if (!is_root(v)) {
-			change(fa[v], dir(v), u);
-		} else {
-			fa[u] = fa[v];
-		}
-		change(u, k ^ 1, v);
-		up(v), up(u);
-	}
+  void apply_rev(node *u) {
+    if (u) {
+      std::swap(u->ls, u->rs);
+      u->rev = !u->rev;
+    }
+  }
 
-	void splay(int u) {
-		static std::vector<int> sta;
-		sta.push_back(u);
-		for (int i = u; !is_root(i); i = fa[i]) {
-			sta.push_back(fa[i]);
-		}
-		while (!sta.empty()) {
-			down(sta.back());
-			sta.pop_back();
-		}
-		while (!is_root(u)) {
-			int v = fa[u];
-			if (is_root(v)) {
-				rotate(u);
-				break;
-			}
-			if (dir(u) == dir(v)) {
-				rotate(v);
-			} else {
-				rotate(u);
-			}
-			rotate(u);
-		}
-	}
+  void down(node *u) {
+    if (u->rev) {
+      apply_rev(u->ls);
+      apply_rev(u->rs);
+      u->rev = false;
+    }
+  }
 
-	void access(int u) {
-		int v = -1;
-		while (u != -1) {
-			splay(u);
-			son[u][1] = v;
-			up(u);
-			v = u, u = fa[u];
-		}
-	}
+  void rotate(node *u) {
+    node *v = u->fa;
+    bool k = u->which();
+    v->change(k, u->son(!k));
+    if (!v->is_root()) {
+      v->fa->change(v->which(), u);
+    } else {
+      u->fa = v->fa;
+    }
+    u->change(!k, v);
+    up(v), up(u);
+  }
 
-	void split(int u, int v) {
-		make_root(u);
-		access(v);
-		splay(v);
-	}
+  void splay(node *u) {
+    static std::vector<node *> sta;
+    sta.push_back(u);
+    for (node *i = u; !i->is_root(); i = i->fa) {
+      sta.push_back(i->fa);
+    }
+    while (!sta.empty()) {
+      down(sta.back());
+      sta.pop_back();
+    }
+    while (!u->is_root()) {
+      node *v = u->fa;
+      if (v->is_root()) {
+        rotate(u);
+        break;
+      }
+      if (u->which() == v->which()) {
+        rotate(v);
+      } else {
+        rotate(u);
+      }
+      rotate(u);
+    }
+  }
+
+  void access(node *u) {
+    node *v = nullptr;
+    while (u) {
+      splay(u);
+      u->son(1) = v;
+      up(u);
+      v = u, u = u->fa;
+    }
+  }
+
+  void make_root(node *u) {
+    access(u);
+    splay(u);
+    apply_rev(u);
+  }
+
+  node *find_root(node *u) {
+    access(u);
+    splay(u);
+    while (u->ls) {
+      down(u);
+      u = u->ls;
+    }
+    splay(u);
+    return u;
+  }
+
+  void split(node *u, node *v) {
+    make_root(u);
+    access(v);
+    splay(v);
+  }
 
 public:
-	LinkCutTree() {}
-	
-	LinkCutTree(std::vector<int> A)
-	  : n(A.size()), fa(n, -1), son(n), rev(n, false), a(A), val(A) {}
+  dynamic_tree(size_type n = 0) : nd(n) {
+    for (size_type i = 0; i < n; ++i) {
+      nd[i] = new node();
+    }
+  }
 
-	void make_root(int u) {
-		access(u);
-		splay(u);
-		reverse(u);
-	}
+  dynamic_tree(const std::vector<Val> &a) : nd(a.size()) {
+    for (size_type i = 0; i < a.size(); ++i) {
+      nd[i] = new node(a[i]);
+    }
+  }
 
-	int find_root(int u) {
-		access(u);
-		splay(u);
-		while (son[u][0] != -1) {
-			down(u);
-			u = son[u][0];
-		}
-		splay(u);
-		return u;
-	}
+  void link(size_type x, size_type y) {
+    node *u = nd[x], *v = nd[y];
+    make_root(u);
+    if (find_root(v) != u) {
+      u->fa = v;
+    }
+  }
 
-	void link(int u, int v) {
-		make_root(u);
-		if (find_root(v) != u) {
-			fa[u] = v;
-		}
-	}
+  void cut(size_type x, size_type y) {
+    node *u = nd[x], *v = nd[y];
+    make_root(u);
+    if (find_root(v) == u && v->fa == u && !v->ls) {
+      u->rs = nullptr;
+      v->fa = nullptr;
+      up(u);
+    }
+  }
 
-	void cut(int u, int v) {
-		make_root(u);
-		if (find_root(v) == u && fa[v] == u && son[v][0] == -1) {
-			son[u][1] = fa[v] = -1;
-			up(u);
-		}
-	}
+  void modify(size_type x, const Val &a) {
+    node *u = nd[x];
+    splay(u);
+    u->v = a;
+    up(u);
+  }
 
-	int query(int u, int v) {
-		split(u, v);
-		return val[v];
-	}
-
-	void modify(int u, int _a) {
-		splay(u);
-		a[u] = _a;
-		up(u);
-	}
+  Val query(size_type x, size_type y) {
+    node *u = nd[x], *v = nd[y];
+    split(u, v);
+    return v->sv;
+  }
 };
 
 int main() {
-	std::ios_base::sync_with_stdio(false);
-	std::cin.tie(0);
+  std::ios_base::sync_with_stdio(false);
+  std::cin.tie(0);
 
-	int n, q;
-	std::cin >> n >> q;
-	std::vector<int> a(n);
-	for (int &v : a) {
-		std::cin >> v;
-	}
-	
-	LinkCutTree T(a);
-	while (q--) {
-		int op;
-		std::cin >> op;
-		if (op == 3) {
-			int x, v;
-			std::cin >> x >> v;
-			--x;
-			T.modify(x, v);
-		} else {
-			int x, y;
-			std::cin >> x >> y;
-			--x, --y;
-			if (op == 0) {
-				std::cout << T.query(x, y) << "\n";
-			} else if (op == 1) {
-				T.link(x, y);
-			} else if (op == 2) {
-				T.cut(x, y);
-			}
-		}
-	}
+  int n, q;
+  std::cin >> n >> q;
+  std::vector<int> a(n);
+  for (int &v : a) {
+    std::cin >> v;
+  }
+  
+  dynamic_tree<int, std::bit_xor<int>> T(a);
+  while (q--) {
+    int op;
+    std::cin >> op;
+    if (op == 3) {
+      int x, v;
+      std::cin >> x >> v;
+      --x;
+      T.modify(x, v);
+    } else {
+      int x, y;
+      std::cin >> x >> y;
+      --x, --y;
+      if (op == 0) {
+        std::cout << T.query(x, y) << "\n";
+      } else if (op == 1) {
+        T.link(x, y);
+      } else if (op == 2) {
+        T.cut(x, y);
+      }
+    }
+  }
 }

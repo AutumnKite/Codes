@@ -1,111 +1,198 @@
 #include <bits/stdc++.h>
 
-class disjoint_set {
+template<typename Val, typename VV = std::plus<Val>>
+class dynamic_tree {
 public:
   typedef std::size_t size_type;
 
 protected:
-  std::vector<size_type> fa;
+  VV fun;
+
+  struct node {
+    node *fa, *ls, *rs;
+    Val v, sv;
+    bool rev;
+
+    node() : fa(), ls(), rs(), v(), sv(), rev() {}
+
+    node(const Val &t_v) : fa(), ls(), rs(), v(t_v), sv(v), rev() {}
+
+    node *&son(bool d) {
+      if (!d) {
+        return ls;
+      } else {
+        return rs;
+      }
+    }
+
+    bool is_root() const {
+      return !fa || (fa->ls != this && fa->rs != this);
+    }
+
+    bool which() const {
+      return fa->rs == this;
+    }
+
+    void change(bool d, node *v) {
+      if (v) {
+        v->fa = this;
+      }
+      son(d) = v;
+    }
+  };
+
+  std::vector<node *> nd;
+
+  void up(node *u) {
+    u->sv = u->v;
+    if (u->ls) {
+      u->sv = fun(u->sv, u->ls->sv);
+    }
+    if (u->rs) {
+      u->sv = fun(u->sv, u->rs->sv);
+    }
+  }
+
+  void apply_rev(node *u) {
+    if (u) {
+      std::swap(u->ls, u->rs);
+      u->rev = !u->rev;
+    }
+  }
+
+  void down(node *u) {
+    if (u->rev) {
+      apply_rev(u->ls);
+      apply_rev(u->rs);
+      u->rev = false;
+    }
+  }
+
+  void rotate(node *u) {
+    node *v = u->fa;
+    bool k = u->which();
+    v->change(k, u->son(!k));
+    if (!v->is_root()) {
+      v->fa->change(v->which(), u);
+    } else {
+      u->fa = v->fa;
+    }
+    u->change(!k, v);
+    up(v), up(u);
+  }
+
+  void splay(node *u) {
+    static std::vector<node *> sta;
+    sta.push_back(u);
+    for (node *i = u; !i->is_root(); i = i->fa) {
+      sta.push_back(i->fa);
+    }
+    while (!sta.empty()) {
+      down(sta.back());
+      sta.pop_back();
+    }
+    while (!u->is_root()) {
+      node *v = u->fa;
+      if (v->is_root()) {
+        rotate(u);
+        break;
+      }
+      if (u->which() == v->which()) {
+        rotate(v);
+      } else {
+        rotate(u);
+      }
+      rotate(u);
+    }
+  }
+
+  void access(node *u) {
+    node *v = nullptr;
+    while (u) {
+      splay(u);
+      u->son(1) = v;
+      up(u);
+      v = u, u = u->fa;
+    }
+  }
+
+  void make_root(node *u) {
+    access(u);
+    splay(u);
+    apply_rev(u);
+  }
+
+  node *find_root(node *u) {
+    access(u);
+    splay(u);
+    while (u->ls) {
+      down(u);
+      u = u->ls;
+    }
+    splay(u);
+    return u;
+  }
+
+  void split(node *u, node *v) {
+    make_root(u);
+    access(v);
+    splay(v);
+  }
 
 public:
-  disjoint_set(size_type n = 0) : fa(n) {
-    std::iota(fa.begin(), fa.end(), 0);
-  }
-
-  size_type find(size_type x) {
-    return fa[x] == x ? x : (fa[x] = find(fa[x]));
-  }
-
-  bool merge(size_type x, size_type y) {
-    x = find(x), y = find(y);
-    if (x == y) {
-      return false;
+  dynamic_tree(size_type n = 0) : nd(n) {
+    for (size_type i = 0; i < n; ++i) {
+      nd[i] = new node();
     }
-    fa[y] = x;
-    return true;
+  }
+
+  dynamic_tree(const std::vector<Val> &a) : nd(a.size()) {
+    for (size_type i = 0; i < a.size(); ++i) {
+      nd[i] = new node(a[i]);
+    }
+  }
+
+  void link(size_type x, size_type y) {
+    node *u = nd[x], *v = nd[y];
+    make_root(u);
+    if (find_root(v) != u) {
+      u->fa = v;
+    }
+  }
+
+  void cut(size_type x, size_type y) {
+    node *u = nd[x], *v = nd[y];
+    make_root(u);
+    if (find_root(v) == u && v->fa == u && !v->ls) {
+      u->rs = nullptr;
+      v->fa = nullptr;
+      up(u);
+    }
+  }
+
+  void modify(size_type x, const Val &a) {
+    node *u = nd[x];
+    splay(u);
+    u->v = a;
+    up(u);
+  }
+
+  Val query(size_type x, size_type y) {
+    node *u = nd[x], *v = nd[y];
+    split(u, v);
+    return v->sv;
   }
 };
 
-class graph {
-  int n;
-  std::vector<std::pair<int, int>> edge;
-  std::vector<std::vector<std::pair<int, int>>> E;
+struct node {
+  int max, cnt;
 
-  std::vector<bool> vis;
-  std::vector<int> sta;
-  std::vector<bool> in;
+  node() : max(-1), cnt() {}
 
-  std::vector<int> cyc;
+  node(int t_max, int t_cnt) : max(t_max), cnt(t_cnt) {}
 
-  bool dfs(int u, int fid) {
-    vis[u] = true;
-    in[u] = true;
-    sta.push_back(u);
-    for (auto [v, id] : E[u]) {
-      if (fid != id) {
-        if (!vis[v]) {
-          if (dfs(v, id)) {
-            return true;
-          }
-        } else {
-          int x;
-          do {
-            x = sta.back();
-            cyc.push_back(x);
-            in[x] = false;
-            sta.pop_back();
-          } while (x != v);
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-public:
-  graph(int t_n) : n(t_n), E(n) {}
-
-  void add_edge(int u, int v) {
-    E[u].emplace_back(v, edge.size());
-    E[v].emplace_back(u, edge.size());
-    edge.emplace_back(u, v);
-  }
-
-  bool check() {
-    int rt = 0;
-    while (rt < n && E[rt].empty()) {
-      ++rt;
-    }
-    disjoint_set D(n);
-    int cnt = 0;
-    for (auto [u, v] : edge) {
-      cnt += !D.merge(u, v);
-    }
-    if (cnt != 1) {
-      return false;
-    }
-    for (int i = 0; i < n; ++i) {
-      if (!E[i].empty() && D.find(i) != D.find(rt)) {
-        return false;
-      }
-    }
-    vis.assign(n, false);
-    in.assign(n, false);
-    sta.clear();
-    cyc.clear();
-    if (!dfs(rt, -1)) {
-      return false;
-    }
-    std::vector<bool> on(n);
-    for (int x : cyc) {
-      on[x] = true;
-    }
-    for (int i = 0; i < n; ++i) {
-      if (!on[i] && (int)E[i].size() > 2) {
-        return false;
-      }
-    }
-    return true;
+  node operator+(const node &rhs) const {
+    return node(std::max(max, rhs.max), cnt + rhs.cnt);
   }
 };
 
