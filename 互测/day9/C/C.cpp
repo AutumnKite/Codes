@@ -152,6 +152,11 @@ public:
     }
   }
 
+  bool connected(size_type x, size_type y) {
+    node *u = nd[x], *v = nd[y];
+    return find_root(u) == find_root(v);
+  }
+
   void link(size_type x, size_type y) {
     node *u = nd[x], *v = nd[y];
     make_root(u);
@@ -184,15 +189,195 @@ public:
   }
 };
 
-struct node {
+struct info {
   int max, cnt;
 
-  node() : max(-1), cnt() {}
+  info() : max(-1), cnt(0) {}
 
-  node(int t_max, int t_cnt) : max(t_max), cnt(t_cnt) {}
+  info(int t_max, int t_cnt) : max(t_max), cnt(t_cnt) {}
 
-  node operator+(const node &rhs) const {
-    return node(std::max(max, rhs.max), cnt + rhs.cnt);
+  info operator+(const info &rhs) const {
+    return info(std::max(max, rhs.max), cnt + rhs.cnt);
+  }
+};
+
+const int INF = std::numeric_limits<int>::max() / 2;
+
+struct node {
+  int min, c;
+  long long sum;
+};
+
+class segtree {
+  constexpr static int enlarge(int n) {
+    int res = 1;
+    while (res < n) {
+      res <<= 1;
+    }
+    return res;
+  }
+
+protected:
+  const int n, en;
+
+  std::vector<node> val;
+  std::vector<int> tag1, tag2;
+
+  void up(int u) {
+    int ls = u << 1, rs = u << 1 | 1;
+    val[u].sum = val[ls].sum + val[rs].sum;
+    val[u].min = std::min(val[ls].min, val[rs].min);
+    val[u].c = 0;
+    if (val[u].min == val[ls].min) {
+      val[u].c += val[ls].c;
+    }
+    if (val[u].min == val[rs].min) {
+      val[u].c += val[rs].c;
+    }
+  }
+
+  void apply1(int u, int v) {
+    val[u].min += v;
+    tag1[u] += v;
+  }
+
+  void apply2(int u, int v) {
+    val[u].sum += 1ll * val[u].c * v;
+    tag2[u] += v;
+  }
+
+  void down(int u) {
+    int ls = u << 1, rs = u << 1 | 1;
+    if (tag1[u]) {
+      apply1(ls, tag1[u]);
+      apply1(rs, tag1[u]);
+      tag1[u] = 0;
+    }
+    if (tag2[u]) {
+      if (val[ls].min == val[u].min) {
+        apply2(ls, tag2[u]);
+      }
+      if (val[rs].min == val[u].min) {
+        apply2(rs, tag2[u]);
+      }
+      tag2[u] = 0;
+    }
+  }
+
+  void build(int u, int l, int r) {
+    if (l + 1 == r) {
+      val[u].min = 0;
+      val[u].c = 1;
+      val[u].sum = 0;
+      return;
+    }
+    int mid = (l + r) >> 1;
+    build(u << 1, l, mid);
+    build(u << 1 | 1, mid, r);
+    up(u);
+  }
+
+  void modify1(int u, int l, int r, int L, int R, int v) {
+    if (L <= l && r <= R) {
+      apply1(u, v);
+      return;
+    }
+    int mid = (l + r) >> 1;
+    down(u);
+    if (L < mid) {
+      modify1(u << 1, l, mid, L, R, v);
+    }
+    if (mid < R) {
+      modify1(u << 1 | 1, mid, r, L, R, v);
+    }
+    up(u);
+  }
+
+  void modify2(int u, int l, int r, int L, int R, int v, int need) {
+    if (val[u].min > need) {
+      return;
+    }
+    if (L <= l && r <= R) {
+      apply2(u, v);
+      return;
+    }
+    int mid = (l + r) >> 1;
+    down(u);
+    if (L < mid) {
+      modify2(u << 1, l, mid, L, R, v, need);
+    }
+    if (mid < R) {
+      modify2(u << 1 | 1, mid, r, L, R, v, need);
+    }
+    up(u);
+  }
+
+  int query_min(int u, int l, int r, int L, int R) {
+    if (L <= l && r <= R) {
+      return val[u].min;
+    }
+    int mid = (l + r) >> 1;
+    down(u);
+    if (R <= mid) {
+      return query_min(u << 1, l, mid, L, R);
+    } else if (L >= mid) {
+      return query_min(u << 1 | 1, mid, r, L, R);
+    } else {
+      return std::min(query_min(u << 1, l, mid, L, R),
+                      query_min(u << 1 | 1, mid, r, L, R));
+    }
+  }
+
+  long long query_sum(int u, int l, int r, int L, int R) {
+    if (L <= l && r <= R) {
+      return val[u].sum;
+    }
+    int mid = (l + r) >> 1;
+    down(u);
+    long long res = 0;
+    if (L < mid) {
+      res += query_sum(u << 1, l, mid, L, R);
+    }
+    if (mid < R) {
+      res += query_sum(u << 1 | 1, mid, r, L, R);
+    }
+    return res;
+  }
+
+public:
+  segtree(int t_n)
+  : n(t_n), en(enlarge(n)), val(en << 1), tag1(en << 1), tag2(en << 1) {
+    if (n) {
+      build(1, 0, n);
+    }
+  }
+
+  void modify1(int l, int r, int v) {
+    if (l < r) {
+      modify1(1, 0, n, l, r, v);
+    }
+  }
+
+  void modify2(int l, int r, int v, int need) {
+    if (l < r) {
+      modify2(1, 0, n, l, r, v, need);
+    }
+  }
+
+  int query_min(int l, int r) {
+    if (l < r) {
+      return query_min(1, 0, n, l, r);
+    } else {
+      return INF;
+    }
+  }
+
+  long long query_sum(int l, int r) {
+    if (l < r) {
+      return query_sum(1, 0, n, l, r);
+    } else {
+      return 0;
+    }
   }
 };
 
@@ -207,30 +392,67 @@ int main() {
     std::cin >> u >> v;
     --u, --v;
   }
-
-  std::vector<std::vector<bool>> ok(n, std::vector<bool>(n));
-  for (int i = 0; i < n; ++i) {
-    for (int j = i; j < n; ++j) {
-      graph G(n);
-      for (int k = i; k <= j; ++k) {
-        G.add_edge(edge[k].first, edge[k].second);
-      }
-      ok[i][j] = G.check();
-    }
-  }
-
   int q;
   std::cin >> q;
-  while (q--) {
+  std::vector<std::vector<std::pair<int, int>>> Q(n);
+  for (int i = 0; i < q; ++i) {
     int l, r;
     std::cin >> l >> r;
     --l;
-    int ans = 0;
-    for (int i = l; i < r; ++i) {
-      for (int j = i; j < r; ++j) {
-        ans += ok[i][j];
+    Q[l].emplace_back(r, i);
+  }
+
+  std::vector<int> deg(n);
+  dynamic_tree<info> T(n * 2);
+  int first = n, second = n;
+  int pos = n, cnt = 0;
+
+  auto add_deg = [&](int u, int d) {
+    cnt -= deg[u] > 2;
+    deg[u] += d;
+    cnt += deg[u] > 2;
+    T.modify(u, info(-1, deg[u] > 2));
+  };
+
+  segtree S(n);
+  std::vector<int> lst(n, n);
+  std::vector<long long> ans(q);
+  for (int i = n - 1; i >= 0; --i) {
+    auto [u, v] = edge[i];
+    if (T.connected(u, v)) {
+      auto tmp = T.query(u, v);
+      if (tmp.max < first) {
+        second = first;
+        first = tmp.max;
+      } else if (tmp.max < second) {
+        second = tmp.max;
       }
+      T.cut(edge[tmp.max].first, n + tmp.max);
+      T.cut(edge[tmp.max].second, n + tmp.max);
     }
-    std::cout << ans << "\n";
+    T.modify(n + i, info(i, 0));
+    T.link(u, n + i);
+    T.link(v, n + i);
+    add_deg(u, 1);
+    add_deg(v, 1);
+    while (pos > first && cnt - T.query(edge[first].first,
+                                    edge[first].second).cnt > 0) {
+      --pos;
+      add_deg(edge[pos].first, -1);
+      add_deg(edge[pos].second, -1);
+    }
+    S.modify1(i, n, -1);
+    S.modify1(i, lst[u], 1);
+    S.modify1(i, lst[v], 1);
+    lst[u] = lst[v] = i;
+    int l = first, r = std::min(second, pos);
+    S.modify2(l, r, 1, 0);
+    for (auto [x, id] : Q[i]) {
+      ans[id] = S.query_sum(i, x);
+    }
+  }
+  
+  for (int i = 0; i < q; ++i) {
+    std::cout << ans[i] << "\n";
   }
 }
