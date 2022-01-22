@@ -183,6 +183,26 @@ struct min {
   }
 };
 
+struct node {
+  long long sum, suml, sumr;
+
+  node() : sum(), suml(), sumr() {}
+
+  node(long long t_sum, long long t_suml, long long t_sumr)
+    : sum(t_sum), suml(t_suml), sumr(t_sumr) {}
+  
+  node(int Ll, int Lr, int Rl, int Rr)
+    : sum(Rr - Rl), suml(1ll * (Rr - Rl) * Ll), sumr(1ll * (Rr - Rl) * Lr) {}
+
+  node operator+(const node &rhs) const {
+    return node(sum + rhs.sum, suml + rhs.suml, sumr + rhs.sumr);
+  }
+
+  node operator-(const node &rhs) const {
+    return node(sum - rhs.sum, suml - rhs.suml, sumr - rhs.sumr);
+  }
+};
+
 int main() {
   std::ios_base::sync_with_stdio(false);
   std::cin.tie(nullptr);
@@ -191,6 +211,13 @@ int main() {
   std::cin >> n;
   long long ans = 0;
   seg_tree<int, min<int>> T(n + 1);
+  std::vector<int> lst(n + 1);
+  std::vector<std::vector<std::tuple<int, int, int, int>>> tp(n + 1);
+  std::vector<std::vector<node>> sum(n + 1, std::vector<node>(1));
+  auto insert = [&](int k, int Ll, int Lr, int Rl, int Rr) {
+    tp[k].emplace_back(Ll, Lr, Rl, Rr);
+    sum[k].push_back(sum[k].back() + node(Ll, Lr, Rl, Rr));
+  };
   for (int q = 1; q <= n; ++q) {
     int v, l, r, k;
     std::cin >> v >> l >> r >> k;
@@ -202,11 +229,69 @@ int main() {
       std::swap(l, r);
     }
     ++r;
-    int L = !v ? q : T.query(0, v);
-    int R = T.query(v, v + 1);
+    int L = T.query(v, v + 1), R = !v ? q : T.query(0, v);
     T.modify(v, q);
     if (L < R) {
-      
+      insert(v, L, R, lst[v], q);
+      lst[v] = -1;
+      int t = v, now = R;
+      while (true) {
+        t = T.upper_bound(t, n + 1, now, now);
+        if (t > n) {
+          break;
+        }
+        int p = T.query(t, t + 1);
+        if (p < L) {
+          insert(t, p, L, lst[t], q);
+          lst[t] = q;
+          break;
+        } else {
+          lst[t] = q;
+          now = p;
+        }
+      }
     }
+    ans = 0;
+    int x = std::lower_bound(tp[k].begin(), tp[k].end(), l,
+            [&](const auto &v, int p) {
+              return std::get<1>(v) < p;
+            }) - tp[k].begin();
+    int y = std::lower_bound(tp[k].begin(), tp[k].end(), l,
+            [&](const auto &v, int p) {
+              return std::get<0>(v) < p;
+            }) - tp[k].begin();
+    int z = std::lower_bound(tp[k].begin(), tp[k].end(), r,
+            [&](const auto &v, int p) {
+              return std::get<3>(v) < p;
+            }) - tp[k].begin();
+    x = std::min(x, z);
+    y = std::min(y, z);
+    {
+      auto tmp = sum[k][y] - sum[k][x];
+      ans += tmp.sumr - tmp.sum * l;
+    }
+    {
+      auto tmp = sum[k][z] - sum[k][y];
+      ans += tmp.sumr - tmp.suml;
+    }
+    if (z < (int)tp[k].size()) {
+      auto [Ll, Lr, Rl, Rr] = tp[k][z];
+      ans += 1ll * (std::max(Lr, l) - std::max(Ll, l))
+                 * (std::min(Rr, r) - std::min(Rl, r));
+    }
+    if (lst[k] != -1) {
+      int Ll = T.query(k, k + 1), Lr = !k ? q : T.query(0, k);
+      int Rl = lst[k], Rr = q;
+      ans += 1ll * (std::max(Lr, l) - std::max(Ll, l))
+                 * (std::min(Rr, r) - std::min(Rl, r));
+    }
+    std::cout << ans << "\n";
   }
 }
+/*
+4
+0 0 0 1
+0 1 0 5
+5 2 1 0
+5 2 1 0
+*/
