@@ -23,8 +23,9 @@ int main() {
 
     auto solve = [&](auto &self, int n, int k) -> void {
       if (n <= 2) {
-        val.push_back(1 << k);
-        val.push_back(1 << (k + 1));
+        for (int i = 0; i < n; ++i) {
+          val.push_back(1 << (k + i));
+        }
         return;
       }
       if ((n & -n) == n) {
