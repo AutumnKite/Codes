@@ -29,6 +29,7 @@ int main() {
         return;
       }
       if ((n & -n) == n) {
+        val.push_back(n << k);
         --n;
       }
       int p = 1 << std::__lg(n);
