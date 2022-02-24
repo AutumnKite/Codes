@@ -19,9 +19,9 @@ int main() {
     int ans = 0;
     while (it != mp.end()) {
       int &t = mp[1ll * it->first * x];
-      if (t < it->second) {
+      if (t <= it->second) {
         ans += it->second - t;
-        t = 0;
+        mp.erase(1ll * it->first * x);
       } else {
         t -= it->second;
       }
