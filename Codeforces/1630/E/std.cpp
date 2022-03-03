@@ -157,8 +157,12 @@ int main() {
     for (int i = 0; i < n; ++i) {
       if (c[i]) {
         S.push_back(c[i]);
-        g = std::__gcd(g, c[i]);
+        g = std::gcd(g, c[i]);
       }
+    }
+    if (g == n) {
+      std::cout << 1 << "\n";
+      continue;
     }
     std::vector<int> mu(n + 1);
     mu[1] = 1;
@@ -183,18 +187,20 @@ int main() {
       return fac[n] * ifac[m] * ifac[n - m];
     };
     auto calc = [&](int n, int m) {
-      return m * C(n - 1, m - 1) * C(n, m - 1).inv();
+      return mint::raw(m) * mint::raw(n - m) * fac[n - 2] * ifac[n - 1];
     };
-    mint ans = 0;
+    mint ansA = 0, ansB = 0;
     for (int i = 1; i <= g; ++i) {
       if (g % i == 0) {
-        mint s = 0;
+        mint sA = 0, sB = fac[n / i];
         for (int x : S) {
-          s += calc(n / i, x / i) * i;
+          sA += calc(n / i, x / i);
+          sB *= ifac[x / i];
         }
-        ans += mu[g] * s;
+        ansA += mu[g] * sA * i * sB;
+        ansB += mu[g] * sB;
       }
     }
-    std::cout << ans << "\n";
+    std::cout << ansA * ansB.inv() << "\n";
   }
 }
