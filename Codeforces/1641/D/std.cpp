@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
 
-constexpr int BLOCK = 25000;
+constexpr int BLOCK = 6250;
 
 constexpr int INF = std::numeric_limits<int>::max();
 
@@ -30,8 +30,8 @@ int main() {
         mp[x].set(i - L);
       }
     }
-    for (int i = 0; i < n; ++i) {
-      if (a[i].first + a[0].first >= ans) {
+    for (int i = L; i < n; ++i) {
+      if (a[i].first + a[L].first >= ans) {
         continue;
       }
       std::bitset<BLOCK> tmp;
