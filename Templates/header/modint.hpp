@@ -8,7 +8,7 @@ namespace myh {
 
 template<unsigned P>
 class modint {
-  static_assert(1 <= P);
+  static_assert(1 <= P, "P must be a positive integer");
 
   using mint = modint<P>;
 
@@ -18,26 +18,24 @@ protected:
 public:
   constexpr modint() : v() {}
 
-  template<typename T, 
-           typename std::enable_if<
-                    std::is_signed<T>::value
-                    && std::is_integral<T>::value,
-                    bool>::type = true>
-  constexpr modint(T _v) : v() {
-    long long tmp = _v % static_cast<long long>(P);
+  template<typename T,
+           typename std::enable_if<std::is_integral_v<T> &&
+                                       std::is_signed_v<T>,
+                                   bool>::type = true>
+  constexpr modint(T t_v) : v() {
+    long long tmp = t_v % static_cast<long long>(P);
     if (tmp < 0) {
       tmp += P;
     }
     v = tmp;
   }
 
-  template<typename T, 
-           typename std::enable_if<
-                    std::is_unsigned<T>::value
-                    && std::is_integral<T>::value,
-                    bool>::type = true>
-  constexpr modint(T _v) : v() {
-    v = _v % P;
+  template<typename T,
+           typename std::enable_if<std::is_integral_v<T> &&
+                                       std::is_unsigned_v<T>,
+                                   bool>::type = true>
+  constexpr modint(T t_v) : v() {
+    v = t_v % P;
   }
 
   constexpr unsigned val() const {
@@ -76,19 +74,19 @@ public:
   }
 
   constexpr mint &operator--() {
-    v == 0 ? v = P - 1 : --v;
+    v ? --v : v = P - 1;
     return *this;
   }
-
+  
   constexpr mint operator--(int) {
     mint tmp = *this;
-    v == 0 ? v = P - 1 : --v;
+    v ? --v : v = P - 1;
     return tmp;
   }
 
   constexpr mint operator-() const {
     mint res;
-    res.v = v == 0 ? 0 : P - v;
+    res.v = v ? P - v : 0;
     return res;
   }
 
@@ -153,26 +151,24 @@ protected:
 public:
   dynamic_modint() : v() {}
 
-  template<typename T, 
-           typename std::enable_if<
-                    std::is_signed<T>::value
-                    && std::is_integral<T>::value,
-                    bool>::type = true>
-  dynamic_modint(T _v) {
-    long long tmp = _v % static_cast<long long>(P);
+  template<typename T,
+           typename std::enable_if<std::is_integral_v<T> &&
+                                       std::is_signed_v<T>,
+                                   bool>::type = true>
+  dynamic_modint(T t_v) : v() {
+    long long tmp = t_v % static_cast<long long>(P);
     if (tmp < 0) {
       tmp += P;
     }
     v = tmp;
   }
 
-  template<typename T, 
-           typename std::enable_if<
-                    std::is_unsigned<T>::value
-                    && std::is_integral<T>::value,
-                    bool>::type = true>
-  dynamic_modint(T _v) {
-    v = _v % P;
+  template<typename T,
+           typename std::enable_if<std::is_integral_v<T> &&
+                                       std::is_unsigned_v<T>,
+                                   bool>::type = true>
+  dynamic_modint(T t_v) : v() {
+    v = t_v % P;
   }
 
   unsigned val() const {
@@ -215,19 +211,19 @@ public:
   }
 
   mint &operator--() {
-    v == 0 ? v = P - 1 : --v;
+    v ? --v : v = P - 1;
     return *this;
   }
-
+  
   mint operator--(int) {
     mint tmp = *this;
-    v == 0 ? v = P - 1 : --v;
+    v ? --v : v = P - 1;
     return tmp;
   }
 
   mint operator-() const {
     mint res;
-    res.v = v == 0 ? 0 : P - v;
+    res.v = v ? P - v : 0;
     return res;
   }
 
