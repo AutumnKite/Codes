@@ -19,8 +19,8 @@ public:
   constexpr modint() : v() {}
 
   template<typename T,
-           typename std::enable_if<std::is_integral_v<T> &&
-                                       std::is_signed_v<T>,
+           typename std::enable_if<std::is_integral<T>::value &&
+                                       std::is_signed<T>::value,
                                    bool>::type = true>
   constexpr modint(T t_v) : v() {
     long long tmp = t_v % static_cast<long long>(P);
@@ -31,8 +31,8 @@ public:
   }
 
   template<typename T,
-           typename std::enable_if<std::is_integral_v<T> &&
-                                       std::is_unsigned_v<T>,
+           typename std::enable_if<std::is_integral<T>::value &&
+                                       std::is_unsigned<T>::value,
                                    bool>::type = true>
   constexpr modint(T t_v) : v() {
     v = t_v % P;
@@ -152,8 +152,8 @@ public:
   dynamic_modint() : v() {}
 
   template<typename T,
-           typename std::enable_if<std::is_integral_v<T> &&
-                                       std::is_signed_v<T>,
+           typename std::enable_if<std::is_integral<T>::value &&
+                                       std::is_signed<T>::value,
                                    bool>::type = true>
   dynamic_modint(T t_v) : v() {
     long long tmp = t_v % static_cast<long long>(P);
@@ -164,8 +164,8 @@ public:
   }
 
   template<typename T,
-           typename std::enable_if<std::is_integral_v<T> &&
-                                       std::is_unsigned_v<T>,
+           typename std::enable_if<std::is_integral<T>::value &&
+                                       std::is_unsigned<T>::value,
                                    bool>::type = true>
   dynamic_modint(T t_v) : v() {
     v = t_v % P;
