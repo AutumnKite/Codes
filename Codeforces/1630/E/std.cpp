@@ -180,25 +180,34 @@ int main() {
     for (int i = n; i >= 1; --i) {
       ifac[i - 1] = ifac[i] * i;
     }
-    auto C = [&](int n, int m) {
-      if (m < 0 || m > n) {
-        return mint();
-      }
-      return fac[n] * ifac[m] * ifac[n - m];
-    };
+
+    std::vector<mint> f(g + 1), h(g + 1);
+
     auto calc = [&](int n, int m) {
       return mint::raw(m) * mint::raw(n - m) * fac[n - 2] * ifac[n - 1];
     };
-    mint ansA = 0, ansB = 0;
+
     for (int i = 1; i <= g; ++i) {
       if (g % i == 0) {
-        mint sA = 0, sB = fac[n / i];
+        f[i] = 0;
+        h[i] = fac[n / i];
         for (int x : S) {
-          sA += calc(n / i, x / i);
-          sB *= ifac[x / i];
+          f[i] += calc(n / i, x / i);
+          h[i] *= ifac[x / i];
         }
-        ansA += mu[g] * sA * i * sB;
-        ansB += mu[g] * sB;
+        f[i] *= i;
+      }
+    }
+    mint ansA = 0, ansB = 0;
+    for (int i = g; i >= 1; --i) {
+      if (g % i == 0) {
+        f[i] *= h[i];
+        for (int j = i + i; j <= g; j += i) {
+          f[i] -= f[j];
+          h[i] -= h[j];
+        }
+        ansA += f[i] * i;
+        ansB += h[i] * i;
       }
     }
     std::cout << ansA * ansB.inv() << "\n";
