@@ -160,10 +160,10 @@ int main() {
     for (int i = 0; i < n; ++i) {
       cnt += v <= a[i];
     }
-    for (int j = 0; j <= k; ++j) {
-      mint s = C[k][j] * mint(v).pow(k - j) * mint(m - v).pow(j);
-      ans += std::max(0, cnt + j - (n + k - x)) * s;
-      ans += std::min(n - x, cnt + j) * s;
+    for (int i = 0; i <= k; ++i) {
+      mint s = C[k][i] * mint(v).pow(k - i) * mint(m - v).pow(i);
+      ans += std::max(0, cnt + i - (n + k - x)) * s;
+      ans += std::min(n - x, cnt + i) * s;
     }
   }
   std::cout << ans << "\n";
