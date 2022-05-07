@@ -141,6 +141,7 @@ int main() {
 
   int n, m, k, x;
   std::cin >> n >> m >> k >> x;
+  --x;
   std::vector<int> a(n);
   for (int i = 0; i < n; ++i) {
     std::cin >> a[i];
@@ -155,10 +156,10 @@ int main() {
   }
 
   mint ans = 0;
-  for (int v = 1; v <= m; ++v) {
+  for (int v = 0; v < m; ++v) {
     int cnt = 0;
     for (int i = 0; i < n; ++i) {
-      cnt += v <= a[i];
+      cnt += v < a[i];
     }
     for (int i = 0; i <= k; ++i) {
       mint s = C[k][i] * mint(v).pow(k - i) * mint(m - v).pow(i);
