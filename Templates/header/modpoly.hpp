@@ -132,12 +132,17 @@ public:
 
   modpoly(const std::vector<mint> &t_f) : f(t_f) {}
 
-  modpoly(std::vector<mint> &&t_f) : f(t_f) {}
+  modpoly(std::vector<mint> &&t_f) : f(std::move(t_f)) {}
 
-  modpoly(mint v) : f(1, v) {}
+  modpoly(const mint &v) : f(1, v) {}
 
-  template<typename Iter>
-  modpoly(const Iter &first, const Iter &last) : f(first, last) {}
+  modpoly(std::initializer_list<mint> l) : f(l) {}
+
+  template<typename Iter,
+           typename = typename std::enable_if<std::is_convertible<
+               typename std::iterator_traits<Iter>::iterator_category,
+               std::input_iterator_tag>::value>::type>
+  modpoly(Iter first, Iter last) : f(first, last) {}
 
   const std::vector<mint> &vec() const {
     return f;
@@ -145,6 +150,10 @@ public:
 
   std::vector<mint> &vec() {
     return f;
+  }
+
+  std::vector<mint> rvec() {
+    return std::move(f);
   }
 
   bool empty() const {
@@ -364,6 +373,62 @@ public:
     exp_solve(g, f, 0, n);
     g.resize(t_n);
     return g;
+  }
+
+  std::vector<mint> eval(std::vector<mint> x) {
+    std::vector<poly> tree(enlarge_to_pow2(x.size()) << 1);
+
+    auto work = [&](auto &self, size_type u, size_type l, size_type r) -> void {
+      if (l + 1 == r) {
+        tree[u] = poly(std::vector<mint>{1, -x[l]});
+        return;
+      }
+      size_type mid = (l + r) >> 1;
+      self(self, u << 1, l, mid);
+      self(self, u << 1 | 1, mid, r);
+      size_type len = enlarge_to_pow2(r - l + 1);
+      tree[u << 1].DFT(len);
+      tree[u << 1 | 1].DFT(len);
+      tree[u].resize(len);
+      for (size_type i = 0; i < len; ++i) {
+        tree[u][i] = tree[u << 1][i] * tree[u << 1 | 1][i];
+      }
+      tree[u].IDFT(len);
+    };
+
+    auto mulT = [&](poly a, const poly &b, size_type n) {
+      size_type len = a.size();
+      for (size_type i = 0; i < len; ++i) {
+        a[i] *= b[i];
+      }
+      a.DFT(len);
+      a.resize(n);
+      return a;
+    };
+
+    std::vector<mint> res(x.size());
+
+    auto solve = [&](auto &self, poly f, size_type u, size_type l,
+                     size_type r) -> void {
+      if (l + 1 == r) {
+        res[l] = f[0];
+        return;
+      }
+      size_type mid = (l + r) >> 1;
+      size_type len = enlarge_to_pow2(r - l + 1);
+      f.IDFT(len);
+      self(self, mulT(f, tree[u << 1 | 1], mid - l), u << 1, l, mid);
+      self(self, mulT(f, tree[u << 1], r - mid), u << 1 | 1, mid, r);
+    };
+
+    poly f(*this);
+    work(work, 1, 0, x.size());
+    tree[1] = tree[1].inv(f.size());
+    size_type len = enlarge_to_pow2(f.size() + x.size());
+    tree[1].DFT(len);
+    f.IDFT(len);
+    solve(solve, mulT(f, tree[1], x.size()), 1, 0, x.size());
+    return res;
   }
 };
 

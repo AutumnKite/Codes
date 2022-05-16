@@ -544,33 +544,24 @@ int main() {
     A[0] = {0, 1};
     A[1] = {0, 2};
     A[2] = A[3] = {1};
-    poly f = qpow(A, n)[0];
-    for (int i = 1; i <= n; ++i) {
-      f[i] *= fac[i];
-    }
-    poly g(n + 1);
-    for (int i = 1; i <= n; ++i) {
-      for (int j = 1; j <= i; ++j) {
-        mint v = fac[n - j] * ifac[n - i] * ifac[i - j] * f[j];
-        if ((i - j) & 1) {
-          g[i] -= v;
-        } else {
-          g[i] += v;
-        }
-      }
-      g[i] *= ifac[i];
-    }
-    return g;
+    return qpow(A, n)[0];
   };
 
-  auto res = qpow(solve(n / m), m - n % m);
+  auto f = qpow(solve(n / m), m - n % m);
   if (n % m) {
-    res *= qpow(solve(n / m + 1), n % m);
+    f *= qpow(solve(n / m + 1), n % m);
   }
   for (int i = 1; i <= n; ++i) {
-    res[i] *= fac[i];
+    f[i] *= fac[i] * fac[n - i];
   }
+
+  poly g(n + 1);
+  for (int i = 0; i <= n; ++i) {
+    g[i] = i & 1 ? -ifac[i] : ifac[i];
+  }
+  g *= f;
+
   for (int i = n; i >= 1; --i) {
-    std::cout << res[i] << " \n"[i == 1];
+    std::cout << g[i] * ifac[n - i] << " \n"[i == 1];
   }
 }
