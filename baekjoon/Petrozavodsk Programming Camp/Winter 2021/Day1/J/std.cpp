@@ -5,26 +5,20 @@ constexpr Tp INF = std::numeric_limits<Tp>::max();
 
 class set {
   std::multiset<int> S;
-  int min, max;
 
 public:
-  set() : min(INF<int>), max(-INF<int>) {}
+  set() {}
 
   void insert(int x) {
     S.insert(x);
-    min = std::min(min, x);
-    max = std::max(max, x);
   }
 
   void erase(int x) {
     S.erase(S.find(x));
-    if (S.empty()) {
-      min = INF<int>;
-      max = -INF<int>;
-    } else {
-      min = *S.begin();
-      max = *S.rbegin();
-    }
+  }
+
+  bool empty() const {
+    return S.empty();
   }
 
   long long query(long long A, long long B, int C, int y) const {
@@ -33,9 +27,9 @@ public:
     }
     long long t = A + 1ll * C * y;
     if (t > 0) {
-      return t * max + B * y;
+      return t * *S.rbegin() + B * y;
     } else {
-      return t * min + B * y;
+      return t * *S.begin() + B * y;
     }
   }
 };
@@ -74,7 +68,7 @@ int main() {
         ++cnt[p[i][j]];
         for (int d = 0; d < 4; ++d) {
           int x = i + dx[d], y = j + dy[d];
-          if (0 <= x && x < n && 0 <= y && y < n && a[x][y] != a[i][j]) {
+          if (0 <= x && x < n && 0 <= y && y < n && p[x][y] != p[i][j]) {
             ++l[p[i][j]];
           }
         }
@@ -87,25 +81,66 @@ int main() {
     }
 
     auto erase = [&](int i, int j) {
+      mp[l[p[i][j]]].erase(w[p[i][j]]);
+      if (mp[l[p[i][j]]].empty()) {
+        mp.erase(l[p[i][j]]);
+      }
       w[p[i][j]] -= a[i][j];
       --cnt[p[i][j]];
       for (int d = 0; d < 4; ++d) {
         int x = i + dx[d], y = j + dy[d];
-        if (0 <= x && x < n && 0 <= y && y < n && a[x][y] != a[i][j]) {
-          --l[p[i][j]];
+        if (0 <= x && x < n && 0 <= y && y < n) {
+          if (p[i][j] != p[x][y]) {
+            --l[p[i][j]];
+          } else {
+            ++l[p[i][j]];
+          }
         }
       }
+      if (cnt[p[i][j]]) {
+        mp[l[p[i][j]]].insert(w[p[i][j]]);
+      }
+    };
+
+    auto insert = [&](int i, int j) {
+      if (cnt[p[i][j]]) {
+        mp[l[p[i][j]]].erase(w[p[i][j]]);
+        if (mp[l[p[i][j]]].empty()) {
+          mp.erase(l[p[i][j]]);
+        }
+      }
+      w[p[i][j]] += a[i][j];
+      ++cnt[p[i][j]];
+      for (int d = 0; d < 4; ++d) {
+        int x = i + dx[d], y = j + dy[d];
+        if (0 <= x && x < n && 0 <= y && y < n) {
+          if (p[i][j] != p[x][y]) {
+            ++l[p[i][j]];
+          } else {
+            --l[p[i][j]];
+          }
+        }
+      }
+      mp[l[p[i][j]]].insert(w[p[i][j]]);
     };
 
     int q;
     std::cin >> q;
     while (q--) {
       int i, j, x;
-      std::cin >> i >> j >> x;
+      long long A, B, C;
+      std::cin >> i >> j >> x >> A >> B >> C;
       --i, --j;
       if (p[i][j] != x) {
-        
+        erase(i, j);
+        p[i][j] = x;
+        insert(i, j);
       }
+      long long ans = -INF<long long>;
+      for (const auto &[v, s] : mp) {
+        ans = std::max(ans, s.query(A, B, C, v));
+      }
+      std::cout << ans << " \n"[q == 0];
     }
   }
 }
