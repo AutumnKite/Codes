@@ -93,6 +93,18 @@ auto solve(int x0, int y0, std::string s) {
   }
 
   if (a.empty()) {
+    if (y0 == 0 && x0 < 0) {
+      oper.push_back(5);
+      oper.push_back(-1);
+      oper.push_back(3);
+      --y0;
+    }
+    while (x0 > 1) {
+      oper.push_back(4);
+      oper.push_back(-1);
+      oper.push_back(2);
+      --x0;
+    }
     while (x0 < 1) {
       oper.push_back(6);
       oper.push_back(-1);
@@ -104,12 +116,6 @@ auto solve(int x0, int y0, std::string s) {
       oper.push_back(-1);
       oper.push_back(3);
       --y0;
-    }
-    while (x0 > 1) {
-      oper.push_back(4);
-      oper.push_back(-1);
-      oper.push_back(2);
-      --x0;
     }
     while (y0 < 0) {
       oper.push_back(7);
