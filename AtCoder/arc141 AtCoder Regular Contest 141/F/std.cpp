@@ -6,15 +6,15 @@ class ACautomaton {
   int cnt, rt;
   std::vector<std::vector<int>> trans;
   std::vector<int> fail;
-  std::vector<int> len, end, size, id;
+  std::vector<int> len, size, id, lst;
 
   int new_node(int l) {
     trans.emplace_back(C, -1);
     fail.push_back(-1);
     len.push_back(l);
-    end.push_back(0);
     size.push_back(0);
     id.push_back(-1);
+    lst.push_back(-1);
     return cnt++;
   }
 
@@ -35,7 +35,7 @@ public:
       u = v;
       ++size[u], id[u] = x;
     }
-    ++end[u];
+    lst[u] = u;
   }
 
   void build() {
@@ -51,7 +51,9 @@ public:
     }
     for (int k = 0; k < (int)Q.size(); ++k) {
       int u = Q[k];
-      end[u] += end[fail[u]];
+      if (lst[fail[u]] != -1) {
+        lst[u] = lst[fail[u]];
+      }
       for (int i = 0; i < C; ++i) {
         int &v = trans[u][i];
         if (v != -1) {
@@ -64,7 +66,7 @@ public:
     }
   }
 
-  std::string work(const std::string &s) const {
+  std::string work(const std::string &s, int x) const {
     std::vector<int> sta;
     sta.push_back(rt);
     std::string res;
@@ -72,11 +74,12 @@ public:
       int u = trans[sta.back()][c - 'A'];
       sta.push_back(u);
       res.push_back(c);
-      if (end[u] > (res.size() == s.size())) {
-        for (int i = 0; i < len[u]; ++i) {
+      while (lst[u] != -1 && (res.size() < s.size() || lst[u] != u)) {
+        for (int i = 0; i < len[lst[u]]; ++i) {
           sta.pop_back();
           res.pop_back();
         }
+        u = sta.back();
       }
     }
     return res;
@@ -112,7 +115,7 @@ int main() {
   std::vector<std::string> b;
   ACautomaton T;
   for (int i = 0; i < n; ++i) {
-    auto t = S.work(a[i]);
+    auto t = S.work(a[i], i);
     if (t.empty()) {
       continue;
     }
