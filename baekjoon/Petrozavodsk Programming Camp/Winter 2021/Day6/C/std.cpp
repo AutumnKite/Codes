@@ -1,3 +1,5 @@
+#include <bits/stdc++.h>
+
 template<typename Tp, typename Comp>
 class geometry {
 public:
@@ -574,3 +576,67 @@ struct double_compare {
 };
 
 using geo = geometry<double, double_compare>;
+
+int main() {
+  std::ios_base::sync_with_stdio(false);
+  std::cin.tie(nullptr);
+  
+  std::cout.setf(std::ios::fixed);
+  std::cout.precision(3);
+
+  int T;
+  std::cin >> T;
+  for (int test = 1; test <= T; ++test) {
+    geo::point A, B;
+    geo::circle C;
+    std::cin >> A >> B >> C.o >> C.r;
+    auto pA = geo::circle_tangent(C, A);
+    auto pB = geo::circle_tangent(C, B);
+    if (pA.size() == 1) {
+      pA.push_back(pA[0]);
+    }
+    if (pB.size() == 1) {
+      pB.push_back(pB[0]);
+    }
+    auto tmp = geo::circle_line_cross(C, geo::line(A, B));
+    if (!tmp.empty() &&
+        geo::line(A, B).direction(tmp[0]) == geo::ON_SEGMENT &&
+        geo::sgn(geo::distance(B, tmp[0])) > 0) {
+      double s0 = geo::distance(A, pA[0]) + geo::distance(B, pB[1]) +
+                  geo::angle(pA[0] - C.o, pB[1] - C.o) * C.r;
+      double s1 = geo::distance(B, pB[0]) + geo::distance(A, pA[1]) +
+                  geo::angle(pB[0] - C.o, pA[1] - C.o) * C.r;
+      std::cout << std::min(s0, s1) << "\n";
+      continue;
+    }
+    double l, r;
+    if (geo::sgn(geo::cross(pA[1] - C.o, pB[1] - C.o)) > 0) {
+      l = (pB[1] - C.o).angle();
+    } else {
+      l = (pA[1] - C.o).angle();
+    }
+    if (geo::sgn(geo::cross(pA[0] - C.o, pB[0] - C.o)) > 0) {
+      r = (pA[0] - C.o).angle();
+    } else {
+      r = (pB[0] - C.o).angle();
+    }
+    if (geo::sgn(r, l) < 0) {
+      r += 2 * geo::pi;
+    }
+
+    auto calc = [&](double x) {
+      auto P = C.o + geo::point(C.r, 0).rotate(x);
+      return geo::distance(A, P) + geo::distance(B, P);
+    };
+
+    for (int i = 0; i < 60; ++i) {
+      double mid = (l + r) / 2;
+      if (calc(mid) > calc(mid + 1e-6)) {
+        l = mid;
+      } else {
+        r = mid;
+      }
+    }
+    std::cout << calc(l) << "\n";
+  }
+}
