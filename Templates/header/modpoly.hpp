@@ -176,6 +176,18 @@ public:
     f.resize(t_n);
   }
 
+  bool operator<(const poly &rhs) const {
+    return f.size() < rhs.f.size();
+  }
+
+  bool operator>(const poly &rhs) const {
+    return f.size() > rhs.f.size();
+  }
+
+  bool operator==(const poly &rhs) const {
+    return f == rhs.f;
+  }
+
   void DFT(size_type n) {
     init.build_rev(n);
     f.resize(n);
