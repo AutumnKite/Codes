@@ -142,7 +142,7 @@ int main() {
   int n, k;
   std::cin >> n >> k;
   std::vector<std::pair<int, int>> A;
-  int zero = 0;
+  mint zero = 1;
   for (int i = 0; i < n; ++i) {
     int x;
     std::cin >> x;
@@ -151,7 +151,7 @@ int main() {
     } else if (x < 0) {
       A.emplace_back(-x, 1);
     } else {
-      ++zero;
+      zero *= 2;
     }
   }
   n = A.size();
@@ -193,7 +193,7 @@ int main() {
 
   mint ans = 0;
   for (int i = 0; i < n; ++i) {
-    ans += f[i][k][0] * pw[i];
+    ans += f[i][k][0] * pw[i] * zero;
   }
   for (int i = 0; i < n; ++i) {
     std::vector<mint> g(n + 1);
@@ -218,11 +218,11 @@ int main() {
                 }
                 ++x;
               }
-              ans += sum * inv[p] * a[y] * prod;
+              ans += sum * inv[p] * a[y] * prod * zero;
               ++c;
               sum *= 2;
             } else {
-              ans += pw[y] * inv[i] * a[y] * prod;
+              ans += pw[y] * inv[i] * a[y] * prod * zero;
             }
           }
         }
@@ -238,7 +238,7 @@ int main() {
                 }
                 --y;
               }
-              ans += sum * inv[i] * a[x] * prod;
+              ans += sum * inv[i] * a[x] * prod * zero;
               sum *= inv2;
             } else {
               ++c;
@@ -253,8 +253,6 @@ int main() {
       }
     }
   }
-
-  std::cerr << ans * mint(2).pow(zero) << "\n";
 
   if (k & 1) {
     {
@@ -271,7 +269,7 @@ int main() {
             if (sgn[x]) {
               ++c;
             } else {
-              ans += prod * inv[i] * a[x] * pw[x + c];
+              ans += prod * inv[i] * a[x] * pw[x + c] * zero;
             }
           }
         }
@@ -295,9 +293,5 @@ int main() {
       }
     }
   }
-  std::cout << ans * mint(2).pow(zero) << "\n";
+  std::cout << ans << "\n";
 }
-/*
-4 2
-2 -3 -4 5
-*/
