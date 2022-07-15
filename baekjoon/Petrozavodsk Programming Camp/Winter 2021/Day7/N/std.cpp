@@ -39,7 +39,7 @@ int main() {
           if (cnt[ymin] > cnt[ymax]) {
             std::swap(ymin, ymax);
           }
-          if (cnt[x] >= cnt[ymax]) {
+          if (cnt[x] >= cnt[ymin]) {
             std::cout << "EMPTY " << id[ymin] << std::endl;
             cnt[ymin] = cnt[x] = 0;
             std::swap(id[ymin], id[x]);
