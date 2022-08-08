@@ -1,3 +1,5 @@
+#include <bits/stdc++.h>
+
 template<typename Tp, typename Comp>
 class geometry {
 public:
@@ -579,6 +581,8 @@ public:
   }
 };
 
+using geol = geometry<long long, std::less<long long>>;
+
 struct double_compare {
   constexpr bool operator()(const double &a, const double &b) const {
     return a + 1e-9 <= b;
@@ -587,8 +591,122 @@ struct double_compare {
 
 using geod = geometry<double, double_compare>;
 
-using geol = geometry<long long, std::less<long long>>;
-
 geod::point trans(geol::point p) {
   return geod::point(p.x, p.y);
+}
+
+template<typename T>
+std::vector<int> manacher(const T &s) {
+  int n = s.size();
+  std::vector<int> h(n);
+  for (int i = 0, m = 0, r = 0; i < n; ++i) {
+    if (i < r) {
+      h[i] = std::min(h[2 * m - i], r - i);
+    } else {
+      h[i] = 0;
+    }
+    while (i - h[i] >= 0 && i + h[i] < n && s[i - h[i]] == s[i + h[i]]) {
+      ++h[i];
+    }
+    if (i + h[i] > r) {
+      m = i, r = i + h[i];
+    }
+  }
+  return h;
+}
+
+int main() {
+  std::ios_base::sync_with_stdio(false);
+  std::cin.tie(nullptr);
+
+  std::cout.setf(std::ios::fixed);
+  std::cout.precision(12);
+
+  int n;
+  std::cin >> n;
+  geol::polygon g(n);
+  for (int i = 0; i < n; ++i) {
+    std::cin >> g[i];
+  }
+  std::rotate(g.begin(), std::min_element(g.begin(), g.end()), g.end());
+  geol::polygon ng;
+  for (int i = 0; i < n; ++i) {
+    while (ng.size() > 1 &&
+           geol::cross(ng[ng.size() - 2] - ng.back(), g[i] - ng.back()) >= 0) {
+      ng.pop_back();
+    }
+    ng.push_back(g[i]);
+  }
+  g.swap(ng);
+  n = g.size();
+
+  std::vector<std::pair<long long, long long>> a;
+  for (int i = 0; i < n; ++i) {
+    auto A = g[(i + n - 1) % n] - g[i], B = g[(i + 1) % n] - g[i];
+    a.emplace_back(geol::dot(A, B), geol::cross(A, B));
+    a.emplace_back(B.len2(), 0);
+  }
+  a.insert(a.end(), a.begin(), a.end());
+  auto h = manacher(a);
+  int cnt = 0;
+  for (int i = 0; i < 2 * n; ++i) {
+    if (h[i + n] >= n) {
+      ++cnt;
+    }
+  }
+
+  if (cnt == 0) {
+    std::cout << 0 << "\n";
+    return 0;
+  }
+
+  if (cnt == 2) {
+    int x = -1;
+    for (int i = 0; i < 2 * n; ++i) {
+      if (h[i + n] >= n) {
+        x = (i + n) % (2 * n);
+        break;
+      }
+    }
+
+    auto calc = [&](geod::point A, geod::point B, geod::line l) {
+      auto dA = geod::line_point_distance(l, A);
+      auto dB = geod::line_point_distance(l, B);
+      if (geod::sgn(dA, dB) == 0) {
+        return geod::pi * dA * dA * geod::distance(A, B);
+      } else {
+        auto d = geod::distance(geod::projection(l, A),
+                                geod::projection(l, B));
+        auto hA = dA * d / (dB - dA), hB = hA + d;
+        return geod::pi / 3 * (dB * dB * hB - dA * dA * hA);
+      }
+    };
+
+    if (x & 1) {
+      x /= 2;
+      geod::line l(trans(g[x]), trans(g[(x + 1) % n]));
+      l = l.vertical_bisector();
+      double ans = 0;
+      for (int i = 0; i < (n - 1) / 2; ++i) {
+        ans += calc(trans(g[(x + 1 + i) % n]), trans(g[(x + 2 + i) % n]), l);
+      }
+      std::cout << ans << "\n";
+    } else {
+      x /= 2;
+      geod::line l(trans(g[(x + n - 1) % n]), trans(g[(x + 1) % n]));
+      l = l.vertical_bisector();
+      double ans = 0;
+      for (int i = 0; i < n / 2; ++i) {
+        ans += calc(trans(g[(x + i) % n]), trans(g[(x + 1 + i) % n]), l);
+      }
+      std::cout << ans << "\n";
+    }
+    return 0;
+  }
+
+  double r = 0;
+  for (int i = 0; i < n / 2; ++i) {
+    r = std::max(r, geod::distance(trans(g[i]), trans(g[i + n / 2])) / 2);
+  }
+  std::cout << geod::pi * 4 / 3 * r * r * r << "\n";
 }
