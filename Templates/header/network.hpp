@@ -129,23 +129,21 @@ protected:
 
   size_type n, S, T;
   std::vector<edge> edges;
-  mf_network G;
+  mf_network<Flow> G;
 
 public:
   lu_mf_network(size_type t_n) : n(t_n), S(n), T(n + 1), G(n + 2) {}
 
   void add_edge(size_type u, size_type v, Flow lower, Flow upper) {
     edges.emplace_back(u, v, lower, upper);
-    if (lower < upper) {
-      G.add_edge(u, v, upper - lower);
-    }
+    G.add_edge(u, v, upper - lower);
   }
 
   size_type edge_size() const {
     return edges.size();
   }
 
-  void slope() {
+  bool slope() {
     std::vector<Flow> d(n);
     for (const auto &e : edges) {
       d[e.u] += e.lower;
@@ -159,7 +157,23 @@ public:
         G.add_edge(i, T, d[i]);
       }
     }
-    G.slope(S, T);
+    Flow flow;
+    G.slope(S, T, flow);
+    size_type idx = edges.size();
+    for (size_type i = 0; i < n; ++i) {
+      if (d[i] < 0) {
+        if (G.edge_flow(idx) < -d[i]) {
+          return false;
+        }
+        ++idx;
+      } else if (d[i] > 0) {
+        if (G.edge_flow(idx) < d[i]) {
+          return false;
+        }
+        ++idx;
+      }
+    }
+    return true;
   }
 
   Flow edge_flow(size_type id) const {
@@ -189,11 +203,16 @@ public:
     return G.edge_size() - sloped;
   }
 
-  void slope(size_type S, size_type T, Flow &flow) {
+  bool slope(size_type S, size_type T, Flow &flow) {
     sloped = true;
-    G.add_edge(T, S, INF_flow);
-    G.slope();
-    flow = G.edge_flow(edge_size());
+    G.add_edge(T, S, 0, INF_flow);
+    if (!G.slope()) {
+      flow = 0;
+      return false;
+    } else {
+      flow = G.edge_flow(edge_size());
+      return true;
+    }
   }
 
   Flow edge_flow(size_type id) const {
