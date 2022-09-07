@@ -3,55 +3,55 @@
 class dynamic_seg_tree {
 public:
   static int n;
+  static int cnt;
 
-protected:
   struct node {
-    node *ls, *rs;
-    int v;
+    int ls, rs, v;
+
+    node() : ls(), rs(), v() {}
 
     node(int t_v) : ls(), rs(), v(t_v) {}
   };
 
-  node *rt;
+  static node nd[20000000];
+
+protected:
+  int rt;
   
-  void up(node *u) {
-    u->v = (u->ls == nullptr ? 0 : u->ls->v) +
-           (u->rs == nullptr ? 0 : u->rs->v);
+  void up(int u) {
+    nd[u].v = nd[nd[u].ls].v + nd[nd[u].rs].v;
   }
 
-  void add(node *&u, int l, int r, int x, int v) {
-    if (u == nullptr) {
-      u = new node(0);
-    } else {
-      u = new node(*u);
-    }
+  void add(int &u, int l, int r, int x, int v) {
+    nd[cnt] = nd[u];
+    u = cnt++;
     if (l + 1 == r) {
-      u->v += v;
+      nd[u].v += v;
       return;
     }
     int mid = l + ((r - l) >> 1);
     if (x < mid) {
-      add(u->ls, l, mid, x, v);
+      add(nd[u].ls, l, mid, x, v);
     } else {
-      add(u->rs, mid, r, x, v);
+      add(nd[u].rs, mid, r, x, v);
     }
     up(u);
   }
 
-  int query(node *u, int l, int r, int L, int R) const {
-    if (u == nullptr) {
+  int query(int u, int l, int r, int L, int R) const {
+    if (!u) {
       return 0;
     }
     if (L <= l && r <= R) {
-      return u->v;
+      return nd[u].v;
     }
     int mid = l + ((r - l) >> 1);
     if (R <= mid) {
-      return query(u->ls, l, mid, L, R);
+      return query(nd[u].ls, l, mid, L, R);
     } else if (L >= mid) {
-      return query(u->rs, mid, r, L, R);
+      return query(nd[u].rs, mid, r, L, R);
     } else {
-      return query(u->ls, l, mid, L, R) + query(u->rs, mid, r, L, R);
+      return query(nd[u].ls, l, mid, L, R) + query(nd[u].rs, mid, r, L, R);
     }
   }
 
@@ -71,7 +71,8 @@ public:
   }
 };
 
-int dynamic_seg_tree::n;
+int dynamic_seg_tree::n, dynamic_seg_tree::cnt = 1;
+dynamic_seg_tree::node dynamic_seg_tree::nd[20000000];
 
 int main() {
   std::ios_base::sync_with_stdio(false);
@@ -90,7 +91,7 @@ int main() {
     x[i + 1] = (x[i] + d[i]) % m;
   }
   for (int i = 0; i < n; ++i) {
-    c[i] = (c[i] - x[i]) % m;
+    c[i] = (c[i] + m - x[i]) % m;
   }
 
   dynamic_seg_tree::n = m;
@@ -127,18 +128,33 @@ int main() {
       f[i] = f[nxt[i]] + (c[nxt[i]] - c[i] + m) % m;
     }
   }
-  long long ans = f[0];
-  for (int i = 0; i < n; ++i) {
+
+  auto calc = [&](int v) -> long long {
     int l = 0, r = n + 1;
     while (l + 1 < r) {
       int mid = (l + r) >> 1;
-      if (T[mid].query(0, c[i] + 1) >= mid) {
+      if (T[mid].query(0, v + 1) >= mid) {
         l = mid;
       } else {
         r = mid;
       }
     }
-    ans = std::min(ans, f[l] + (c[l] - c[i] + m) % m);
+    if (l == n) {
+      return 0;
+    }
+    return f[l] + (c[l] - v + m) % m;
+  };
+
+  long long ans = f[0];
+  for (int i = 0; i < n; ++i) {
+    ans = std::min(ans, calc(c[i]));
+    ans = std::min(ans, calc((c[i] + g[i] - 1) % m));
   }
   std::cout << ans + std::accumulate(d.begin(), d.end(), 0ll) << "\n";
 }
+/*
+2 4
+2 2
+2 0
+0
+*/
