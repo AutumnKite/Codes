@@ -160,15 +160,18 @@ int main() {
 
   std::vector<std::vector<mint>> f(n + 1, std::vector<mint>(n + 1));
   for (int j = 1; j <= n; ++j) {
+    f[0][j] = 1;
     for (int i = 1; i <= n; ++i) {
-      f[i][j] = mint(j).pow(i);
+      f[i][j] = f[i - 1][j] * j;
     }
     for (int y = 1; y <= j; ++y) {
       mint s = 0, t = 0;
       for (int i = 1; i <= n; ++i) {
-        s = s * (j - y + 1) + (f[i][y] - f[i][y - 1]);
-        t = t * (j - y) + (f[i][y] - f[i][y - 1]);
+        s = s * (j - y + 1);
+        t = t * (j - y);
         f[i][j] -= s - t;
+        s += f[i][y] - f[i][y - 1];
+        t += f[i][y] - f[i][y - 1];
       }
     }
   }
