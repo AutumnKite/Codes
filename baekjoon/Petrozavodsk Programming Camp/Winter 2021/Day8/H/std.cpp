@@ -142,6 +142,9 @@ mint calc(long long n) {
 }
 
 mint calc(long long l, long long r) {
+  if (l == 0) {
+    return calc(r);
+  }
   return calc(r) - calc(l - 1);
 }
 
@@ -172,17 +175,23 @@ int main() {
     }
     if (ta - sa > tb - sb) {
       ans += calc(sa, ta);
-      if (sb >= 0 && tb >= 0 && sb + tb >= tb - sb) {
-        long long a = ((tb - sb) + (ta - sa)) / 2;
-        long long b = ((tb - sb) - (ta - sa)) / 2;
-        ans += calc(sb - )
+      if (sb >= 0 && tb >= 0 && sb + tb >= ta - sa) {
+        long long a = ((ta - sa) + (tb - sb)) / 2;
+        long long b = ((ta - sa) - (tb - sb)) / 2;
+        ans += calc(sb - b + 1, sb);
+        ans += calc(sb - b, tb);
+      } else {
+        ans += calc(1, std::abs(sb));
+        ans += calc(0, tb);
+        ans += (ta - sa - std::abs(sb) - tb) / 2;
       }
+      std::cout << ans * inv2 << "\n";
     } else {
       long long a = ((tb - sb) + (ta - sa)) / 2;
       long long b = ((tb - sb) - (ta - sa)) / 2;
       ans += calc(sb, tb);
       ans += calc(sa - b + 1, sa);
-      ans += calc(sa - b, ta + 1);
+      ans += calc(sa - b, ta);
       std::cout << ans * inv2 << "\n";
     }
   }
