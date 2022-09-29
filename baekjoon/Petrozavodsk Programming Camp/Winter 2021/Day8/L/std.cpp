@@ -2,7 +2,7 @@
 
 struct instruction {
   enum oper_t {
-    imm, ld, st
+    imm, ld, st, debug
   };
 
   oper_t op;
@@ -23,6 +23,14 @@ void load_memory(int r0, int r1) {
 
 void set_memory(int r0, int r1) {
   ans.emplace_back(instruction::st, r0, r1);
+}
+
+void debug_register(int r0) {
+  ans.emplace_back(instruction::debug, r0, -1);
+}
+
+void debug_memory(int m0) {
+  ans.emplace_back(instruction::debug, -1, m0);
 }
 
 void load_memory_constant(int r0, int m0) {
@@ -205,21 +213,21 @@ void multiply(int m0, int m1, int m2) {
 }
 
 void logical_and(int m0, int m1, int m2) {
-  load_memory(12, m1);
-  load_memory(13, m2);
+  load_memory_constant(12, m1);
+  load_memory_constant(13, m2);
   condition_not(12, 13, 13);
   set_memory_constant(m0, 12);
 }
 
 void equal0(int m0, int m1, int m2) {
-  load_memory(12, m1);
-  load_memory(13, m2);
+  load_memory_constant(12, m1);
+  load_memory_constant(13, m2);
   change_upper_to_constant(12, 12, 231);
   change_upper_to_constant(13, 13, 231);
-  load_constant(15, 2);
-  set_memory(12, 15);
-  load_memory(15, 13);
-  copy_register(13, 15);
+  load_constant(14, 2);
+  set_memory(12, 14);
+  load_memory(14, 13);
+  copy_register(13, 14);
   change_upper_to_constant(13, 13, 255);
   set_memory_constant(m0, 13);
   load_constant(13, 0);
@@ -283,11 +291,15 @@ void init() {
     load_constant(14, y << 8 | x);
     set_memory(15, 14);
   }
+  for (int i = 0; i < 256; ++i) {
+    load_constant(15, 229 * 256 + 2 * i);
+    load_constant(14, i);
+    set_memory(15, 14);
+  }
 }
 
 int constant_in_memory(int x) {
-  int i = x / 16, j = x % 16;
-  return (237 + i) * 256 + j;
+  return 229 * 256 + 2 * x;
 }
 
 void print() {
@@ -297,8 +309,10 @@ void print() {
       std::cout << "imm r" << p.x << ", " << p.y << "\n";
     } else if (p.op == instruction::ld) {
       std::cout << "ld r" << p.x << ", r" << p.y << "\n";
-    } else {
+    } else if (p.op == instruction::st) {
       std::cout << "st r" << p.x << ", r" << p.y << "\n";
+    } else {
+      std::cout << "debug " << p.x << ", " << p.y << "\n";
     }
   }
 }
@@ -309,16 +323,17 @@ int main() {
   set_memory_constant(65526, 1);
   equal(65526, 65526, constant_in_memory(0));
   load_memory_constant(13, 65526);
+
   load_constant(12, constant_in_memory(1));
   condition(1, 12, 13);
-  load_memory(11, 65528);
+  load_memory_constant(11, 65528);
   condition(11, 12, 13);
-  set_memory(65528, 11);
+  set_memory_constant(65528, 11);
   set_memory_constant(65526, 0);
   load_constant(12, 65526);
-  load_memory(11, 65534);
+  load_memory_constant(11, 65534);
   condition(11, 12, 13);
-  set_memory(65534, 11);
+  set_memory_constant(65534, 11);
 
   set_memory_constant(65526, 2);
   equal(65526, 65526, constant_in_memory(0));

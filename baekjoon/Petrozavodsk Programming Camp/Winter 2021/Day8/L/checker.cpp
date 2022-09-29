@@ -2,7 +2,7 @@
 
 struct instruction {
   enum oper_t {
-    imm, ld, st
+    imm, ld, st, debug
   };
 
   oper_t op;
@@ -25,16 +25,22 @@ void set_memory(int r0, int r1) {
   ins.emplace_back(instruction::st, r0, r1);
 }
 
+void debug(int x, int y) {
+  ins.emplace_back(instruction::debug, x, y);
+}
+
 int r[16];
 int mem[1 << 16 | 1];
 int ans;
 
 void init() {
-  int n = 2;
+  int n = 4000;
   std::mt19937 rnd(time(0));
   std::vector<int> a(n);
   for (int i = 0; i < n; ++i) {
-    a[i] = rnd() % 65536;
+    do {
+      a[i] = rnd() % 65536;
+    } while (!(a[i] & 1));
   }
   ans = 1;
   std::cout << n << "\n";
@@ -59,8 +65,12 @@ int main() {
     std::cin >> op;
     if (op == "imm") {
       std::cin >> a >> x >> b >> y;
-    } else {
+    } else if (op == "ld") {
       std::cin >> a >> x >> b >> c >> y;
+    } else if (op == "st") {
+      std::cin >> a >> x >> b >> c >> y;
+    } else {
+      std::cin >> x >> a >> y;
     }
     if (op == "imm") {
       assert(0 <= x && x < 16);
@@ -70,10 +80,15 @@ int main() {
       assert(0 <= x && x < 16);
       assert(0 <= y && y < 16);
       load_memory(x, y);
-    } else {
+    } else if (op == "st") {
       assert(0 <= x && x < 16);
       assert(0 <= y && y < 16);
       set_memory(x, y);
+    } else {
+      assert(x == -1 || (0 <= x && x < 16));
+      assert(y == -1 || (0 <= y && y < 65536));
+      assert(x != -1 || y != -1);
+      debug(x, y);
     }
   }
 
@@ -84,9 +99,13 @@ int main() {
         r[p.x] = p.y;
       } else if (p.op == instruction::ld) {
         r[p.x] = mem[r[p.y] + 1] << 8 | mem[r[p.y]];
-      } else {
+      } else if (p.op == instruction::st) {
         mem[r[p.x]] = r[p.y] & 255;
         mem[r[p.x] + 1] = r[p.y] >> 8;
+      } else if (p.x == -1) {
+        std::cout << (mem[p.y + 1] << 8 | mem[p.y]) << "\n";
+      } else {
+        std::cout << r[p.x] << "\n";
       }
     }
   }
