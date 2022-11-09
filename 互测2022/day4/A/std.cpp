@@ -12,69 +12,128 @@ int main() {
   for (int i = 0; i < n; ++i) {
     std::cin >> a[i];
   }
-  if (sub == 1) {
-    while (q--) {
-      int op;
-      std::cin >> op;
-      if (op == 1) {
-        int l, r;
-        std::cin >> l >> r;
-        for (int i = r - 1; i >= l; --i) {
-          a[i] ^= a[i - 1];
-        }
-      } else {
-        int pos;
-        std::cin >> pos;
-        --pos;
-        std::cout << a[pos] << "\n";
-      }
-    }
-    for (int x : a) {
-      std::cout << x << "\n";
-    }
-  } else {
-    const int B = 7;
-    std::vector<std::vector<int>> f(1 << B, std::vector<int>(n));
-    f[0] = a;
-    for (int S = 1; S < (1 << B); ++S) {
-      int L = S & -S;
-      for (int i = 0; i < n; ++i) {
-        f[S][i] = f[S ^ L][i] ^ (i >= L ? f[S ^ L][i - L] : 0);
-      }
-    }
+  
+  const int B = 511, C = (n - 1) / B + 1, lg = std::__lg(B) + 1;
+  std::vector<int> L(C), R(C);
+  for (int i = 0; i < C; ++i) {
+    L[i] = i * B, R[i] = std::min((i + 1) * B, n);
+  }
 
-    auto query = [&](int S, int i) {
-      int L = S & ((1 << B) - 1);
-      S ^= L;
+  std::vector<std::vector<int>> tag(C), val(C);
+
+  auto pushdown = [&](int c) {
+    int S = tag[c].size();
+    for (int i = 0; i < lg; ++i) {
+      if (S >> i & 1) {
+        for (int j = R[c] - 1; j >= L[c] + (1 << i); --j) {
+          a[j] ^= a[j - (1 << i)];
+        }
+      }
+    }
+    auto sum = tag[c];
+    std::reverse(sum.begin(), sum.end());
+    sum.resize(1 << lg);
+    for (int i = 0; i < lg; ++i) {
+      for (int S = 0; S < (1 << lg); ++S) {
+        if (S >> i & 1) {
+          sum[S ^ (1 << i)] ^= sum[S];
+        }
+      }
+    }
+    for (int i = L[c]; i < R[c]; ++i) {
+      a[i] ^= sum[i - L[c]];
+    }
+    tag[c].clear();
+  };
+
+  auto build = [&](int c) {
+    std::vector<int> sum(a.begin() + L[c], a.begin() + R[c]);
+    std::reverse(sum.begin(), sum.end());
+    sum.resize(1 << lg);
+    for (int i = 0; i < lg; ++i) {
+      for (int S = 0; S < (1 << lg); ++S) {
+        if (S >> i & 1) {
+          sum[S] ^= sum[S ^ (1 << i)];
+        }
+      }
+    }
+    val[c] = sum;
+  };
+
+  auto query = [&](int x) {
+    int c = x / B, S = tag[c].size();
+    if (x == R[c] - 1) {
+      return val[c][S];
+    } else {
       int ans = 0;
       for (int T = S; ; T = (T - 1) & S) {
-        if (i >= T) {
-          ans ^= f[L][i - T];
+        if (x - T >= L[c]) {
+          ans ^= a[x - T];
         }
         if (!T) {
           break;
         }
       }
-      return ans;
-    };
-
-    int k = 0;
-    while (q--) {
-      int op;
-      std::cin >> op;
-      if (op == 1) {
-        int l, r;
-        std::cin >> l >> r;
-        ++k;
-      } else {
-        int pos;
-        std::cin >> pos;
-        --pos;
-        std::cout << query(k, pos) << "\n";
+      for (int T = x - L[c]; T < S; T = (T + 1) | (x - L[c])) {
+        ans ^= tag[c][S - T - 1];
       }
+      return ans;
     }
-    for (int i = 0; i < n; ++i) {
-      std::cout << query(k, i) << "\n";
+  };
+
+  auto update = [&](int c) {
+    tag[c].push_back(query(L[c] - 1));
+    if ((int)tag[c].size() == B) {
+      pushdown(c);
+      build(c);
     }
+  };
+
+  for (int i = 0; i < C; ++i) {
+    build(i);
+  }
+
+  while (q--) {
+    int op;
+    std::cin >> op;
+    if (op == 1) {
+      int l, r;
+      std::cin >> l >> r;
+      --l;
+      int bl = l / B, br = (r - 1) / B;
+      if (bl == br) {
+        pushdown(bl);
+        for (int i = r - 1; i > l; --i) {
+          a[i] ^= a[i - 1];
+        }
+        build(bl);
+        continue;
+      }
+      pushdown(br);
+      for (int i = r - 1; i > L[br]; --i) {
+        a[i] ^= a[i - 1];
+      }
+      a[L[br]] ^= query(L[br] - 1);
+      build(br);
+      for (int i = br - 1; i > bl; --i) {
+        update(i);
+      }
+      pushdown(bl);
+      for (int i = R[bl] - 1; i > l; --i) {
+        a[i] ^= a[i - 1];
+      }
+      build(bl);
+    } else {
+      int x;
+      std::cin >> x;
+      --x;
+      std::cout << query(x) << "\n";
+    }
+  }
+  for (int i = 0; i < C; ++i) {
+    pushdown(i);
+  }
+  for (int i = 0; i < n; ++i) {
+    std::cout << a[i] << "\n";
   }
 }
