@@ -2,127 +2,127 @@
 #include <bits/stdc++.h>
 
 int query(int x, int y, int z) {
-  if (z == x) {
-    return -3;
-  }
-  if (z == y) {
-    return -2;
-  }
-  int t = ask(x + 1, y + 1, z + 1) - 1;
-  if (t == x) {
-    return 0;
-  } else if (t == y) {
-    return 1;
-  } else if (t == z) {
-    return 2;
-  } else {
-    return -1;
-  }
+  return ask(x + 1, y + 1, z + 1) - 1;
 }
 
-const int LIM[] = {1, 1000, 100, 100, 5, 40, 26, 16};
+bool on_chain(int x, int y, int z) {
+  return x == z || y == z || (x != y && query(x, y, z) == z);
+}
 
 std::mt19937 rnd(time(0));
 
 int centroid(int sub, int n, int m) {
-  --sub;
-  std::vector<int> vis(n, -1);
-  std::vector<bool> path(n, true);
-  int x = rnd() % n;
-  int qcnt = 0;
-
-  auto check = [&]() {
-    int now = qcnt;
-    for (int i = 0; i < n; ++i) {
-      if (vis[i] < 0) {
-        ++now;
+  if (sub == 1) {
+    return query(0, 1, 2) + 1;
+  }
+  if (sub == 5) {
+    int x = 0, y = 1;
+    for (int i = 2; i < n; ++i) {
+      if (on_chain(x, i, y)) {
+        y = i;
       }
     }
-    // return now <= LIM[sub] * n;
-    return true;
+    std::vector<int> p(n);
+    std::iota(p.begin(), p.end(), 0);
+    std::nth_element(p.begin(), p.begin() + n / 2, p.end(), [&](int i, int j) {
+      return i != j && on_chain(y, j, i);
+    });
+    return p[n / 2] + 1;
+  }
+
+  auto check_root = [&](int rt) {
+    int now = -1, d = 0;
+    for (int i = 0; i < n; ++i) {
+      if (i != rt) {
+        if (d == 0 || now == -1) {
+          now = i;
+          d = 1;
+          continue;
+        }
+        if (on_chain(now, i, rt)) {
+          --d;
+        } else {
+          ++d;
+        }
+      }
+    }
+    int cnt = 0;
+    for (int i = 0; i < n; ++i) {
+      if (i != rt && !on_chain(now, i, rt)) {
+        ++cnt;
+      }
+    }
+    return cnt <= n / 2;
   };
 
-  while (check()) {
-    std::vector<int> p;
-    for (int i = 0; i < n; ++i) {
-      if (path[i]) {
-        p.push_back(i);
-      }
-    }
-    if (p.size() == 1) {
-      return p[0] + 1;
-    }
-    int y;
+  for (;;) {
+    int x, y;
     do {
-      y = p[rnd() % p.size()];
+      x = rnd() % n;
+      y = rnd() % n;
     } while (x == y);
-
-    std::vector<int> s(n);
-    int cnt[3] = {};
+    std::vector<int> type(n, -1);
     for (int i = 0; i < n; ++i) {
-      if (vis[i] < 0) {
-        s[i] = query(x, y, i);
-        qcnt += x != i && y != i;
+      if (on_chain(x, y, i)) {
+        type[i] = -2;
+      }
+    }
+    int res;
+    for (;;) {
+      int cnt = 0;
+      for (int i = 0; i < n; ++i) {
+        cnt += type[i] == -2;
+      }
+      if (cnt == 1) {
+        res = std::find(type.begin(), type.end(), -2) - type.begin();
+        break;
+      }
+      int z;
+      do {
+        z = rnd() % n;
+      } while (type[z] >= 0);
+      int mid = z;
+      if (type[z] != -2) {
+        for (int i = 0; i < n; ++i) {
+          if (type[i] == -2 && on_chain(x, z, i) && on_chain(y, z, i)) {
+            mid = i;
+            break;
+          }
+        }
+      }
+      std::vector<bool> L(n), R(n);
+      int cntL = 0, cntR = 0, cntM = 0;
+      for (int i = 0; i < n; ++i) {
+        L[i] = type[i] == 0 || y == mid || (type[i] < 0 && on_chain(y, i, mid));
+        R[i] = type[i] == 1 || x == mid || (type[i] < 0 && on_chain(x, i, mid));
+        cntL += L[i] && !R[i];
+        cntR += R[i] && !L[i];
+        cntM += L[i] && R[i];
+      }
+      --cntM;
+      if (cntL > n / 2) {
+        for (int i = 0; i < n; ++i) {
+          if (type[i] < 0 && R[i]) {
+            type[i] = 1;
+          }
+        }
+      } else if (cntR > n / 2) {
+        for (int i = 0; i < n; ++i) {
+          if (type[i] < 0 && L[i]) {
+            type[i] = 0;
+          }
+        }
+      } else if (cntM > n / 2) {
+        res = mid;
+        break;
       } else {
-        s[i] = vis[i];
+        return mid + 1;
       }
-      ++cnt[(s[i] + 3) % 3];
     }
-    int which;
-    if (cnt[0] * 2 > n) {
-      which = 0;
-    } else if (cnt[1] * 2 > n) {
-      which = 1;
-    } else {
-      which = 2;
-    }
-
-    if (which == 0) {
-      for (int i = 0; i < n; ++i) {
-        if (i != x && s[i] != 0) {
-          vis[i] = 0;
-          path[i] = false;
-        }
-      }
-    } else if (which == 1) {
-      for (int i = 0; i < n; ++i) {
-        if (i != y && s[i] != 1) {
-          vis[i] = 0;
-          path[i] = false;
-        } else {
-          if (sub == 2 || sub == 4) {
-            continue;
-          }
-          if (vis[i] == -1) {
-            path[i] = true;
-          } else {
-            vis[i] = -2;
-          }
-        }
-      }
-      x = y;
-    } else {
-      for (int i = 0; i < n; ++i) {
-        if (i != x && i != y && s[i] != 2) {
-          if (s[i] == 0) {
-            vis[i] = 0;
-          } else if (s[i] == 1) {
-            vis[i] = 1;
-          }
-          path[i] = false;
-        }
-      }
-      std::swap(x, y);
-      for (int i = 0; i < n; ++i) {
-        if (vis[i] >= 0) {
-          vis[i] ^= 1;
-        }
-      }
-      vis[y] = 1;
-      path[y] = false;
+    if (check_root(res)) {
+      return res + 1;
     }
   }
-  return x;
 }
 
 #ifdef LOCAL
