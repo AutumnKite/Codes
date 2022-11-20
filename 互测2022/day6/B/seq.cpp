@@ -38,7 +38,7 @@ void SEQ(int n, int M) {
     long long s = (1ll << k) + 1;
     std::vector<std::pair<int, int>> edge;
     for (int p = 3; p <= s && p < 2 * n; p += 2) {
-      if (s % p == 0) {
+      if (cnt[p] == -1 && s % p == 0) {
         cnt[p] = k;
         for (int i = std::max(1, p - n); i <= n && i < p; i += 2) {
           int j = p - i;
@@ -68,25 +68,41 @@ void SEQ(int n, int M) {
       Q.push_back(i);
     }
   }
+
+  std::vector<int> fa(n + 1), dep(n + 1);
+
+  auto dfs = [&](auto &self, int u) -> void {
+    for (int v : E[u]) {
+      if (v != fa[u]) {
+        fa[v] = u;
+        dep[v] = dep[u] + 1;
+        self(self, v);
+      }
+    }
+  };
+
+  dfs(dfs, 1);
   for (int i = 0; i < (int)Q.size(); ++i) {
     int u = Q[i];
-
-    std::vector<int> fa(n + 1);
-
-    auto dfs = [&](auto &self, int u) -> void {
-      for (int v : E[u]) {
-        if (v != fa[u]) {
-          fa[v] = u;
-          self(self, v);
-        }
-      }
-    };
-
-    dfs(dfs, u);
-
-    int x = std::find(now.begin(), now.end(), goal[u]) - now.begin();
-    while (x != u) {
-      int y = fa[x];
+    int v = std::find(now.begin(), now.end(), goal[u]) - now.begin();
+    std::vector<int> pu, pv;
+    while (dep[u] > dep[v]) {
+      pu.push_back(u);
+      u = fa[u];
+    }
+    while (dep[v] > dep[u]) {
+      pv.push_back(v);
+      v = fa[v];
+    }
+    while (u != v) {
+      pu.push_back(u);
+      pv.push_back(v);
+      u = fa[u], v = fa[v];
+    }
+    pu.push_back(u);
+    pu.insert(pu.end(), pv.rbegin(), pv.rend());
+    for (int i = pu.size(); --i;) {
+      int x = pu[i], y = pu[i - 1];
       int t = x;
       for (int i = 0; i < cnt[x + y]; ++i) {
         if (t % 2 == 0) {
@@ -98,9 +114,8 @@ void SEQ(int n, int M) {
         }
       }
       std::swap(now[x], now[y]);
-      x = y;
     }
-    for (int v : E[u]) {
+    for (int v : E[Q[i]]) {
       --deg[v];
       if (deg[v] == 1) {
         Q.push_back(v);

@@ -35,14 +35,14 @@ namespace A {
 		for (int i=1;i<=n;i++) scanf("%d",&b[i]),a[i]=i;
 		SEQ(n,M);
 		for (int i=1;i<=n;i++) if (a[i]!=b[i]) WA2();
-		puts("AC");
+		printf("%d operations\n",tot);
 	}
 }
 int Get(int x) {
 	return A::Get(x);
 }
 void add(int x,int y) {
-	printf("%d %d\n",x,y);
+	// printf("%d %d\n",x,y);
 	A::add(x,y);
 }
 void answer(int flag) {
